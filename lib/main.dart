@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FinTracker',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: .fromSeed(seedColor: Color(0xFF2563EB)),
       ),
       home: const MyHomePage(title: 'FinTracker Home Page'),
     );
