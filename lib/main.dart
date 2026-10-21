@@ -1,10 +1,10 @@
-import 'package:fintracker/expenses.dart';
-import 'package:fintracker/income.dart';
-import 'package:fintracker/income_form.dart';
+import 'package:fintracker/view/expenses.dart';
+import 'package:fintracker/view/form/income_form.dart';
+import 'package:fintracker/view/income.dart';
 import 'package:flutter/material.dart';
 
-import 'expenses_form.dart';
-import 'home_page.dart';
+import 'view/form/expenses_form.dart';
+import 'view/home_page.dart';
 
 void main() {
   runApp(const MyApp());
