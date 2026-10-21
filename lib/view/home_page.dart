@@ -10,13 +10,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  int currentPageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -25,22 +19,34 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      bottomNavigationBar: NavigationBar(
+          onDestinationSelected: (int index) {
+            setState(() {
+              currentPageIndex = index;
+            });
+          },
+          selectedIndex: currentPageIndex,
+          destinations: const [
+            NavigationDestination(
+              selectedIcon: Icon(Icons.home_filled),
+              icon: Icon(Icons.home_outlined),
+              label: "Dashboard",
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.arrow_upward_rounded),
+              label: "Income",
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.arrow_downward_rounded),
+              label: "Expense",
             ),
           ],
-        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: Center(
+        child: Text(
+          ["Dashboard", "Income", "Expense"][currentPageIndex],
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
       ),
     );
   }
