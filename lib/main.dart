@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Color(0xFF2563EB)),
       ),
-      home: const HomePage(title: 'Home Page'),
+      home: const HomePage(title: 'FinTracker'),
       routes: {
         Expenses.routeName: (context) => Expenses(),
         Income.routeName: (context) => Income(),
