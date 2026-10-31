@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
@@ -159,11 +159,36 @@ class DashboardState extends State<Dashboard> {
                         ),
                         trailing: const Icon(Icons.pie_chart_outline),
                       ),
-                      Row(
-                        children: const [
-                          SizedBox(width: 12),
-                          SizedBox(height: 120), //TODO: Payment Method chart
-                        ],
+                      SizedBox(
+                        height: 160,
+                        child: Center(
+                          child: SizedBox(
+                            width: 160,
+                            height: 160,
+                            child: PieChart(
+                              PieChartData(
+                                sections: [
+                                  PieChartSectionData(
+                                    value: 50,
+                                    title: 'Credit Card',
+                                    titleStyle: TextStyle(fontWeight: .bold),
+                                    showTitle: true,
+                                    radius: 25,
+                                    color: Colors.red,
+                                  ),
+                                  PieChartSectionData(
+                                    value: 20,
+                                    title: "PIX",
+                                    titleStyle: TextStyle(fontWeight: .bold),
+                                    showTitle: true,
+                                    radius: 25,
+                                    color: Colors.lightGreen,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -191,11 +216,60 @@ class DashboardState extends State<Dashboard> {
                         ),
                         trailing: const Icon(Icons.category_outlined),
                       ),
-                      Row(
-                        children: const [
-                          SizedBox(width: 12),
-                          SizedBox(height: 120), //TODO: Category chart
-                        ],
+                      SizedBox(
+                        height: 160,
+                        child: Center(
+                          child: SizedBox(
+                            width: 160,
+                            height: 160,
+                            child: PieChart(
+                              PieChartData(
+                                sections: [
+                                  PieChartSectionData(
+                                    value: 20,
+                                    title: 'Transport',
+                                    titleStyle: TextStyle(fontWeight: .bold),
+                                    showTitle: true,
+                                    radius: 25,
+                                    color: Colors.red,
+                                  ),
+                                  PieChartSectionData(
+                                    value: 20,
+                                    title: 'Food',
+                                    titleStyle: TextStyle(fontWeight: .bold),
+                                    showTitle: true,
+                                    radius: 25,
+                                    color: Colors.lightGreen,
+                                  ),
+                                  PieChartSectionData(
+                                    value: 20,
+                                    title: 'Misc',
+                                    titleStyle: TextStyle(fontWeight: .bold),
+                                    showTitle: true,
+                                    radius: 25,
+                                    color: Colors.orangeAccent,
+                                  ),
+                                  PieChartSectionData(
+                                    value: 20,
+                                    title: 'Fun',
+                                    titleStyle: TextStyle(fontWeight: .bold),
+                                    showTitle: true,
+                                    radius: 25,
+                                    color: Colors.blueAccent,
+                                  ),
+                                  PieChartSectionData(
+                                    value: 20,
+                                    title: 'Investments',
+                                    titleStyle: TextStyle(fontWeight: .bold),
+                                    showTitle: true,
+                                    radius: 25,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -221,10 +295,7 @@ class DashboardState extends State<Dashboard> {
                             fontSize: 14,
                           ),
                         ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
+                        subtitle: Text("Average: R\$ 2.260"),
                         trailing: const Icon(
                           Icons.circle,
                           color: Colors.teal,
@@ -232,11 +303,38 @@ class DashboardState extends State<Dashboard> {
                         ),
                       ),
                       Row(
-                        children: const [
-                          SizedBox(width: 12),
-                          SizedBox(
-                            height: 100,
-                          ), // TODO: Weekly Income Evolution Chart
+                        children: [
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 140,
+                              child: LineChart(
+                                LineChartData(
+                                  minX: 0,
+                                  maxX: 3,
+                                  minY: 0,
+                                  maxY: 1000,
+                                  gridData: FlGridData(show: false),
+                                  titlesData: FlTitlesData(show: false),
+                                  borderData: FlBorderData(show: false),
+                                  lineBarsData: [
+                                    LineChartBarData(
+                                      spots: const [
+                                        FlSpot(0, 1000),
+                                        FlSpot(1, 660),
+                                        FlSpot(2, 350),
+                                        FlSpot(3, 250),
+                                      ],
+                                      isCurved: true,
+                                      color: Colors.teal,
+                                      barWidth: 3,
+                                      dotData: FlDotData(show: true),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -259,10 +357,7 @@ class DashboardState extends State<Dashboard> {
                             fontSize: 14,
                           ),
                         ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
+                        subtitle: Text("Average: R\$ 1.070"),
                         trailing: const Icon(
                           Icons.circle,
                           color: Colors.red,
@@ -270,11 +365,38 @@ class DashboardState extends State<Dashboard> {
                         ),
                       ),
                       Row(
-                        children: const [
-                          SizedBox(width: 12),
-                          SizedBox(
-                            height: 100,
-                          ), //TODO: Weekly Expenses Evolution Chart
+                        children: [
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 140,
+                              child: LineChart(
+                                LineChartData(
+                                  minX: 0,
+                                  maxX: 3,
+                                  minY: 0,
+                                  maxY: 1500,
+                                  gridData: FlGridData(show: false),
+                                  titlesData: FlTitlesData(show: false),
+                                  borderData: FlBorderData(show: false),
+                                  lineBarsData: [
+                                    LineChartBarData(
+                                      spots: const [
+                                        FlSpot(0, 820),
+                                        FlSpot(1, 1150),
+                                        FlSpot(2, 930),
+                                        FlSpot(3, 1380),
+                                      ],
+                                      isCurved: true,
+                                      color: Colors.red,
+                                      barWidth: 3,
+                                      dotData: FlDotData(show: true),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
