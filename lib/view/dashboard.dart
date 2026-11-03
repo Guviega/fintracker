@@ -157,7 +157,7 @@ class DashboardState extends State<Dashboard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [],
                         ),
-                        trailing: const Icon(Icons.pie_chart_outline),
+                        trailing: const Icon(Icons.credit_card),
                       ),
                       SizedBox(
                         height: 160,
