@@ -22,9 +22,9 @@ class DashboardState extends State<Dashboard> {
             'Dashboard',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Card(
-            elevation: 2,
+            elevation: 5,
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
               leading: const Icon(
