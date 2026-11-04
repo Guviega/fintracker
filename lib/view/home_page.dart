@@ -1,5 +1,7 @@
 import 'package:fintracker/view/dashboard.dart';
 import 'package:fintracker/view/expenses.dart';
+import 'package:fintracker/view/form/expenses_form.dart';
+import 'package:fintracker/view/form/income_form.dart';
 import 'package:fintracker/view/income.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +22,10 @@ class _HomePageState extends State<HomePage> {
   final fab_color = <int, Color>{
     1: Colors.teal.shade300,
     2: Colors.redAccent,
+  };
+  final fab_route = <int, String> {
+    1: IncomeForm.routeName,
+    2: ExpensesForm.routeName,
   };
 
   @override
@@ -55,7 +61,9 @@ class _HomePageState extends State<HomePage> {
 
       floatingActionButton: currentPageIndex == 1 || currentPageIndex == 2
           ? FloatingActionButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, fab_route[currentPageIndex]!);
+              },
               child: const Icon(Icons.add),
               backgroundColor: fab_color[currentPageIndex],
             )
