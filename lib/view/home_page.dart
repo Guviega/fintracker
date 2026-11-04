@@ -15,7 +15,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
   int currentPageIndex = 0;
+  final fab_color = <int, Color>{
+    1: Colors.teal.shade300,
+    2: Colors.redAccent,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +52,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+
+      floatingActionButton: currentPageIndex == 1 || currentPageIndex == 2
+          ? FloatingActionButton(
+              onPressed: () {},
+              child: const Icon(Icons.add),
+              backgroundColor: fab_color[currentPageIndex],
+            )
+          : null,
       body: Center(
         child: [Dashboard(), Income(), Expenses()][currentPageIndex],
       ),
