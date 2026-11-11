@@ -24,7 +24,7 @@ class DashboardState extends State<Dashboard> {
           ),
           const SizedBox(height: 16),
           Card(
-            elevation: 5,
+            elevation: 1,
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
               leading: const Icon(
@@ -59,7 +59,7 @@ class DashboardState extends State<Dashboard> {
             children: [
               Expanded(
                 child: Card(
-                  elevation: 2,
+                  elevation: 1,
                   child: Column(
                     children: [
                       ListTile(
@@ -98,7 +98,7 @@ class DashboardState extends State<Dashboard> {
               const SizedBox(width: 12),
               Expanded(
                 child: Card(
-                  elevation: 2,
+                  elevation: 1,
                   child: Column(
                     children: [
                       ListTile(
@@ -141,7 +141,7 @@ class DashboardState extends State<Dashboard> {
             children: [
               Expanded(
                 child: Card(
-                  elevation: 2,
+                  elevation: 1,
                   child: Column(
                     children: [
                       ListTile(
@@ -198,7 +198,7 @@ class DashboardState extends State<Dashboard> {
               const SizedBox(width: 12),
               Expanded(
                 child: Card(
-                  elevation: 2,
+                  elevation: 1,
                   child: Column(
                     children: [
                       ListTile(
@@ -283,7 +283,7 @@ class DashboardState extends State<Dashboard> {
             children: [
               Expanded(
                 child: Card(
-                  elevation: 2,
+                  elevation: 1,
                   child: Column(
                     children: [
                       ListTile(
@@ -345,7 +345,7 @@ class DashboardState extends State<Dashboard> {
               const SizedBox(width: 12),
               Expanded(
                 child: Card(
-                  elevation: 2,
+                  elevation: 1,
                   child: Column(
                     children: [
                       ListTile(

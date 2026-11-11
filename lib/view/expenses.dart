@@ -25,7 +25,7 @@ class _ExpensesState extends State<Expenses> {
           SizedBox(height: 16),
           for (int i = 0; i < 4; i++) ...[
             Card(
-              elevation: 3,
+              elevation: 1,
               child: Column(
                 children: [
                   ListTile(
