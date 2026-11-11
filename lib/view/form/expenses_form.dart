@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class ExpensesForm extends StatefulWidget {
+class ExpensesForm extends StatelessWidget {
   static const routeName = "expenses_form";
 
   const ExpensesForm({super.key});
