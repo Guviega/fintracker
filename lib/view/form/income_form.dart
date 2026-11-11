@@ -181,13 +181,3 @@ class _IncomeFormState extends State<IncomeForm> {
     );
   }
 }
-class IncomeForm extends StatelessWidget {
-  static const routeName = "income_form";
-
-  const IncomeForm({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    throw UnimplementedError();
-  }
-}
