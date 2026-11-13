@@ -1,12 +1,14 @@
-import 'package:fintracker/view/expenses.dart';
+import 'package:fintracker/view/ExpenseView.dart';
 import 'package:fintracker/view/form/income_form.dart';
-import 'package:fintracker/view/income.dart';
+import 'package:fintracker/view/IncomeView.dart';
 import 'package:flutter/material.dart';
+import 'imdb.dart';
 
 import 'view/form/expenses_form.dart';
 import 'view/home_page.dart';
 
 void main() {
+  Imdb.runInitialData();
   runApp(const MyApp());
 }
 
@@ -22,8 +24,8 @@ class MyApp extends StatelessWidget {
       ),
       home: const HomePage(title: 'FinTracker'),
       routes: {
-        Expenses.routeName: (context) => Expenses(),
-        Income.routeName: (context) => Income(),
+        ExpenseView.routeName: (context) => ExpenseView(),
+        IncomeView.routeName: (context) => IncomeView(),
         ExpensesForm.routeName: (context) => ExpensesForm(),
         IncomeForm.routeName: (context) => IncomeForm()
       },
