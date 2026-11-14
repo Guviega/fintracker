@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class IncomeForm extends StatefulWidget {
@@ -109,42 +110,6 @@ class _IncomeFormState extends State<IncomeForm> {
                           border: InputBorder.none,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.category, color: detailColor),
-                      title: Text("Category"),
-                    ),
-                    Wrap(
-                      children: [
-                        for (int i = 0; i < 4; i++) ...[
-                          ChoiceChip(
-                            label: Text("Category $i"),
-                            selected: selectedCategory == i,
-                            onSelected: (bool selected) {
-                              setState(() {
-                                selectedCategory = i;
-                              });
-                            },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            selectedColor: detailColor,
-                            backgroundColor: Colors.grey.shade200,
-                            elevation: 2,
-                          ),
-                          SizedBox(width: 8),
-                        ],
-                      ],
                     ),
                   ],
                 ),

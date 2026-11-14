@@ -1,3 +1,4 @@
+import 'package:fintracker/view/CategoryView.dart';
 import 'package:fintracker/view/dashboard.dart';
 import 'package:fintracker/view/ExpenseView.dart';
 import 'package:fintracker/view/form/expenses_form.dart';
@@ -17,13 +18,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   int currentPageIndex = 0;
-  final fab_color = <int, Color>{
-    1: Colors.green,
-    2: Colors.redAccent,
-  };
-  final fab_route = <int, String> {
+  final fab_color = <int, Color>{1: Colors.green, 2: Colors.redAccent};
+  final fab_route = <int, String>{
     1: IncomeForm.routeName,
     2: ExpensesForm.routeName,
   };
@@ -34,7 +31,8 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
         title: Text(widget.title),
-      leading: Icon(Icons.calendar_month),),
+        leading: Icon(Icons.calendar_month),
+      ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
@@ -56,6 +54,11 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.arrow_downward_rounded),
             label: "Expenses",
           ),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.category),
+            icon: Icon(Icons.category_outlined),
+            label: "Categories",
+          ),
         ],
       ),
 
@@ -68,9 +71,12 @@ class _HomePageState extends State<HomePage> {
               backgroundColor: fab_color[currentPageIndex],
             )
           : null,
-      body: Center(
-        child: [Dashboard(), IncomeView(), ExpenseView()][currentPageIndex],
-      ),
+      body: [
+        Dashboard(),
+        IncomeView(),
+        ExpenseView(),
+        CategoryView(),
+      ][currentPageIndex],
     );
   }
 }
