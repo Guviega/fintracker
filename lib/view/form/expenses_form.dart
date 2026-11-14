@@ -1,3 +1,5 @@
+import 'package:fintracker/imdb.dart';
+import 'package:fintracker/model/payment_method.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -14,6 +16,7 @@ class ExpensesForm extends StatefulWidget {
 }
 
 class _ExpensesFormState extends State<ExpensesForm> {
+  var categoryList = Imdb.categoryList;
   Color detailColor = Colors.red;
 
   double labelSize = 12, inputTextSize = 16;
@@ -114,9 +117,9 @@ class _ExpensesFormState extends State<ExpensesForm> {
                     ),
                     Wrap(
                       children: [
-                        for (int i = 0; i < 4; i++) ...[
+                        for (int i = 0; i < categoryList.length; i++) ...[
                           ChoiceChip(
-                            label: Text("Category $i"),
+                            label: Text(categoryList.elementAt(i).name),
                             selected: selectedCategory == i,
                             onSelected: (bool selected) {
                               setState(() {
@@ -150,9 +153,13 @@ class _ExpensesFormState extends State<ExpensesForm> {
                     ),
                     Wrap(
                       children: [
-                        for (int i = 0; i < 4; i++) ...[
+                        for (
+                          int i = 0;
+                          i < PaymentMethod.values.length;
+                          i++
+                        ) ...[
                           ChoiceChip(
-                            label: Text("Method $i"),
+                            label: Text(PaymentMethod.values[i].name),
                             selected: selectedPaymentMethod == i,
                             onSelected: (bool selected) {
                               setState(() {

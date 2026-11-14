@@ -5,5 +5,7 @@ enum PaymentMethod {
   PIX("Pix"),
   OTHER("Other");
 
-  const PaymentMethod(String name);
+  final String name;
+
+  const PaymentMethod(this.name);
 }

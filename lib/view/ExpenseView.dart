@@ -36,13 +36,6 @@ class _ExpenseViewState extends State<ExpenseView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8),
-          child: Text(
-            'Expenses',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-        ),
         if (expenses.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 48),
