@@ -59,7 +59,10 @@ class _ExpenseViewState extends State<ExpenseView> {
           children: [
             ListTile(
               contentPadding: const EdgeInsets.all(8),
-              leading: const Icon(Icons.category_outlined, color: Colors.red),
+              leading: const Icon(
+                Icons.monetization_on_outlined,
+                color: Colors.red,
+              ),
               title: Text(expense.description),
               subtitle: Text(
                 '${expense.category.name} · ${_formatPaymentMethod(expense.paymentMethod.name)}',
