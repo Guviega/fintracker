@@ -1,9 +1,14 @@
 import 'package:fintracker/imdb.dart';
+import 'package:fintracker/view/IncomeView.dart';
+import 'package:fintracker/view/home_page.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+  const Dashboard({super.key, required this.onIncomeTap, required this.onExpensesTap});
+
+  final VoidCallback onIncomeTap;
+  final VoidCallback onExpensesTap;
 
   @override
   State<StatefulWidget> createState() {
@@ -69,68 +74,76 @@ class DashboardState extends State<Dashboard> {
               Expanded(
                 child: Card(
                   elevation: 1,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Total Income',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        trailing: const Icon(
-                          Icons.arrow_upward,
-                          color: Colors.green,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          SizedBox(width: 12),
-                          Text(
-                            '+ ${_formatCurrency(Imdb.getTotalIncome())}',
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: .bold,
-                              fontSize: 18,
-                            ),
+                  child: InkWell(
+                    onTap: widget.onIncomeTap,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.all(12),
+                          title: const Text(
+                            'Total Income',
+                            style: TextStyle(fontSize: 14),
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 12),
-                    ],
+                          trailing: const Icon(
+                            Icons.arrow_upward,
+                            color: Colors.green,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            SizedBox(width: 12),
+                            Text(
+                              '+ ${_formatCurrency(Imdb.getTotalIncome())}',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: .bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                      ],
+                    ),
                   ),
                 ),
               ),
               Expanded(
                 child: Card(
                   elevation: 1,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Total Expenses',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        trailing: const Icon(
-                          Icons.arrow_downward,
-                          color: Colors.red,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          Text(
-                            "- ${_formatCurrency(Imdb.getTotalExpenses())}",
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                  child: InkWell(
+                    onTap: widget.onExpensesTap,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.all(12),
+                          title: const Text(
+                            'Total Expenses',
+                            style: TextStyle(fontSize: 14),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                          trailing: const Icon(
+                            Icons.arrow_downward,
+                            color: Colors.red,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const SizedBox(width: 12),
+                            Text(
+                              "- ${_formatCurrency(Imdb.getTotalExpenses())}",
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
                 ),
               ),

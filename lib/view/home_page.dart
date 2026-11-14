@@ -72,7 +72,18 @@ class _HomePageState extends State<HomePage> {
             )
           : null,
       body: [
-        Dashboard(),
+        Dashboard(
+          onIncomeTap: () {
+            setState(() {
+              currentPageIndex = 1;
+            });
+          },
+          onExpensesTap: () {
+            setState(() {
+              currentPageIndex = 2;
+            });
+          },
+        ),
         IncomeView(),
         ExpenseView(),
         CategoryView(),
