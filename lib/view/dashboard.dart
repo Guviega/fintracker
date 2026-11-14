@@ -46,7 +46,7 @@ class DashboardState extends State<Dashboard> {
                 "+ ${_formatCurrency(Imdb.getTotalResult())}",
                 style: TextStyle(
                   color: isOnProfit() ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: .bold,
                   fontSize: 22,
                 ),
               ),
@@ -59,7 +59,7 @@ class DashboardState extends State<Dashboard> {
                 style: TextStyle(
                   fontSize: 14,
                   color: isOnProfit() ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: .bold,
                 ),
               ),
             ),
@@ -89,7 +89,7 @@ class DashboardState extends State<Dashboard> {
                             '+ ${_formatCurrency(Imdb.getTotalIncome())}',
                             style: TextStyle(
                               color: Colors.green,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: .bold,
                               fontSize: 18,
                             ),
                           ),
