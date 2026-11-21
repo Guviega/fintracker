@@ -5,7 +5,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key, required this.onIncomeTap, required this.onExpensesTap});
+  const Dashboard({
+    super.key,
+    required this.onIncomeTap,
+    required this.onExpensesTap,
+  });
 
   final VoidCallback onIncomeTap;
   final VoidCallback onExpensesTap;
