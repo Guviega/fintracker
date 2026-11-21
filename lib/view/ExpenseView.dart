@@ -54,7 +54,10 @@ class _ExpenseViewState extends State<ExpenseView> {
       elevation: 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.pushNamed(context, ExpensesForm.routeName),
+        onTap: () async {
+          await Navigator.pushNamed(context, ExpensesForm.routeName, arguments: expense);
+          if (mounted) setState(() {});
+        },
         child: Column(
           children: [
             ListTile(

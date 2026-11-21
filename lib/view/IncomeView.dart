@@ -55,7 +55,10 @@ class _IncomeViewState extends State<IncomeView> {
       elevation: 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.pushNamed(context, IncomeForm.routeName),
+        onTap: () async {
+          await Navigator.pushNamed(context, IncomeForm.routeName, arguments: income);
+          if (mounted) setState(() {});
+        },
         child: Column(
           children: [
             ListTile(
