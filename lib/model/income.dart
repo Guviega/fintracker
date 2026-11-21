@@ -10,4 +10,6 @@ class Income {
     required this.date,
     required this.value,
   });
+
+  
 }

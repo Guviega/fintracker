@@ -1,8 +1,9 @@
+import 'package:fintracker/view/CategoryView.dart';
 import 'package:fintracker/view/dashboard.dart';
-import 'package:fintracker/view/expenses.dart';
+import 'package:fintracker/view/ExpenseView.dart';
 import 'package:fintracker/view/form/expenses_form.dart';
 import 'package:fintracker/view/form/income_form.dart';
-import 'package:fintracker/view/income.dart';
+import 'package:fintracker/view/IncomeView.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -17,13 +18,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   int currentPageIndex = 0;
-  final fab_color = <int, Color>{
-    1: Colors.teal.shade300,
-    2: Colors.redAccent,
-  };
-  final fab_route = <int, String> {
+  final fab_color = <int, Color>{1: Colors.green, 2: Colors.redAccent};
+  final fab_route = <int, String>{
     1: IncomeForm.routeName,
     2: ExpensesForm.routeName,
   };
@@ -32,8 +29,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: Text(widget.title, style: TextStyle(fontWeight: .bold),),
+        backgroundColor: Colors.grey[200],
+        title: Text(widget.title),
+        leading: Icon(Icons.calendar_month),
       ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
@@ -56,21 +54,41 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.arrow_downward_rounded),
             label: "Expenses",
           ),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.category),
+            icon: Icon(Icons.category_outlined),
+            label: "Categories",
+          ),
         ],
       ),
 
       floatingActionButton: currentPageIndex == 1 || currentPageIndex == 2
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.pushNamed(context, fab_route[currentPageIndex]!);
+              onPressed: () async {
+                await Navigator.pushNamed(context, fab_route[currentPageIndex]!);
+                if (mounted) setState(() {});
               },
               child: const Icon(Icons.add),
               backgroundColor: fab_color[currentPageIndex],
             )
           : null,
-      body: Center(
-        child: [Dashboard(), Income(), Expenses()][currentPageIndex],
-      ),
+      body: [
+        Dashboard(
+          onIncomeTap: () {
+            setState(() {
+              currentPageIndex = 1;
+            });
+          },
+          onExpensesTap: () {
+            setState(() {
+              currentPageIndex = 2;
+            });
+          },
+        ),
+        IncomeView(),
+        ExpenseView(),
+        CategoryView(),
+      ][currentPageIndex],
     );
   }
 }
