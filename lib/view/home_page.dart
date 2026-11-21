@@ -64,8 +64,9 @@ class _HomePageState extends State<HomePage> {
 
       floatingActionButton: currentPageIndex == 1 || currentPageIndex == 2
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.pushNamed(context, fab_route[currentPageIndex]!);
+              onPressed: () async {
+                await Navigator.pushNamed(context, fab_route[currentPageIndex]!);
+                if (mounted) setState(() {});
               },
               child: const Icon(Icons.add),
               backgroundColor: fab_color[currentPageIndex],
