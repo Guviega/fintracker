@@ -1,8 +1,17 @@
+import 'package:fintracker/imdb.dart';
+import 'package:fintracker/model/payment_method.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+  const Dashboard({
+    super.key,
+    required this.onIncomeTap,
+    required this.onExpensesTap,
+  });
+
+  final VoidCallback onIncomeTap;
+  final VoidCallback onExpensesTap;
 
   @override
   State<StatefulWidget> createState() {
@@ -11,6 +20,169 @@ class Dashboard extends StatefulWidget {
 }
 
 class DashboardState extends State<Dashboard> {
+  static const _chartColors = <Color>[
+    Colors.red,
+    Colors.lightGreen,
+    Colors.blue,
+    Colors.orange,
+    Colors.purple,
+    Colors.teal,
+    Colors.amber,
+    Colors.indigo,
+    Colors.yellowAccent,
+    Colors.deepOrange,
+    Colors.pink,
+    Colors.greenAccent
+  ];
+
+  bool isOnProfit() {
+    return Imdb.getTotalResult() >= 0;
+  }
+
+  String _formatCurrency(double value) {
+    final parts = value.toStringAsFixed(2).split('.');
+    final whole = parts[0].replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+    return 'R\$ $whole,${parts[1]}';
+  }
+
+  List<MapEntry<String, double>> _expenseTotalsByPaymentMethod() {
+    final totalsByMethod = <PaymentMethod, double>{};
+    for (final expense in Imdb.expensesList) {
+      totalsByMethod.update(
+        expense.paymentMethod,
+        (total) => total + expense.value,
+        ifAbsent: () => expense.value,
+      );
+    }
+    final totals = totalsByMethod.entries
+        .map((entry) => MapEntry(entry.key.name, entry.value))
+        .toList();
+    totals.sort((a, b) => b.value.compareTo(a.value));
+    return totals;
+  }
+
+  List<MapEntry<String, double>> _expenseTotalsByCategory() {
+    final totalsByCategory = <String, double>{};
+    for (final expense in Imdb.expensesList) {
+      totalsByCategory.update(
+        expense.category.name,
+        (total) => total + expense.value,
+        ifAbsent: () => expense.value,
+      );
+    }
+    final totals = totalsByCategory.entries.toList();
+    totals.sort((a, b) => b.value.compareTo(a.value));
+    return totals;
+  }
+
+  double _sumTotals(List<MapEntry<String, double>> totals) {
+    var sum = 0.0;
+    for (final entry in totals) {
+      sum += entry.value;
+    }
+    return sum;
+  }
+
+  List<PieChartSectionData> _buildChartSections(
+    List<MapEntry<String, double>> totals,
+    double grandTotal,
+  ) {
+    final sections = <PieChartSectionData>[];
+    for (var i = 0; i < totals.length; i++) {
+      final entry = totals[i];
+      final percentage = (entry.value / grandTotal * 100).round();
+      sections.add(
+        PieChartSectionData(
+          value: entry.value,
+          title: '$percentage%',
+          titleStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            color: Colors.white,
+          ),
+          radius: 48,
+          color: _chartColors[i % _chartColors.length],
+        ),
+      );
+    }
+    return sections;
+  }
+
+  Widget _buildChartLegend(List<MapEntry<String, double>> totals) {
+    return Column(
+      children: [
+        for (var i = 0; i < totals.length; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: _chartColors[i % _chartColors.length],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(totals[i].key, overflow: TextOverflow.ellipsis),
+                ),
+                Text(_formatCurrency(totals[i].value)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _expenseChartCard({
+    required String title,
+    required IconData icon,
+    required List<MapEntry<String, double>> totals,
+  }) {
+    final grandTotal = _sumTotals(totals);
+
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              trailing: Icon(icon),
+            ),
+            if (totals.isEmpty)
+              const SizedBox(
+                height: 160,
+                child: Center(child: Text('No expenses to display')),
+              )
+            else ...[
+              SizedBox(
+                height: 160,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 28,
+                    sections: _buildChartSections(totals, grandTotal),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildChartLegend(totals),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -18,393 +190,145 @@ class DashboardState extends State<Dashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
           Card(
-            elevation: 5,
+            elevation: 1,
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
-              leading: const Icon(
+              leading: Icon(
                 Icons.account_balance,
-                color: Colors.green,
+                color: isOnProfit() ? Colors.green : Colors.red,
                 size: 36,
               ),
-              title: const Text(
-                'Total Earning',
-                style: TextStyle(fontSize: 14),
-              ),
-              subtitle: const Text(
-                '+ R\$ 1.669,70',
+              title: const Text("Total Result", style: TextStyle(fontSize: 14)),
+              subtitle: Text(
+                _formatCurrency(Imdb.getTotalResult()),
                 style: TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
+                  color: isOnProfit() ? Colors.green : Colors.red,
+                  fontWeight: .bold,
                   fontSize: 22,
                 ),
               ),
-              trailing: const Text(
-                'PROFIT',
+              trailing: Text(
+                Imdb.getTotalResult() == 0
+                    ? ''
+                    : isOnProfit()
+                    ? 'PROFIT'
+                    : 'LOSS',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.green,
-                  fontWeight: FontWeight.w600,
+                  color: isOnProfit() ? Colors.green : Colors.red,
+                  fontWeight: .bold,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: Card(
-                  elevation: 2,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Total Income',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
-                        trailing: const Icon(
-                          Icons.arrow_upward,
-                          color: Colors.teal,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          SizedBox(width: 12),
-                          Text(
-                            '+ R\$ 5.120,50',
-                            style: TextStyle(
-                              color: Colors.teal,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                            ),
+                  elevation: 1,
+                  child: InkWell(
+                    onTap: widget.onIncomeTap,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.all(12),
+                          title: const Text(
+                            'Total Income',
+                            style: TextStyle(fontSize: 14),
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 12),
-                    ],
+                          trailing: const Icon(
+                            Icons.arrow_upward,
+                            color: Colors.green,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            SizedBox(width: 12),
+                            Text(
+                              '+ ${_formatCurrency(Imdb.getTotalIncome())}',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: .bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Card(
-                  elevation: 2,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Total Expenses',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
-                        trailing: const Icon(
-                          Icons.arrow_downward,
-                          color: Colors.red,
-                        ),
-                      ),
-                      Row(
-                        children: const [
-                          SizedBox(width: 12),
-                          Text(
-                            '- R\$ 3.450,80',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                            ),
+                  elevation: 1,
+                  child: InkWell(
+                    onTap: widget.onExpensesTap,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.all(12),
+                          title: const Text(
+                            'Total Expenses',
+                            style: TextStyle(fontSize: 14),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                          trailing: const Icon(
+                            Icons.arrow_downward,
+                            color: Colors.red,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const SizedBox(width: 12),
+                            Text(
+                              "- ${_formatCurrency(Imdb.getTotalExpenses())}",
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(width: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  elevation: 2,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Payment Method',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
-                        trailing: const Icon(Icons.credit_card),
-                      ),
-                      SizedBox(
-                        height: 160,
-                        child: Center(
-                          child: SizedBox(
-                            width: 160,
-                            height: 160,
-                            child: PieChart(
-                              PieChartData(
-                                sections: [
-                                  PieChartSectionData(
-                                    value: 50,
-                                    title: 'Credit Card',
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.red,
-                                  ),
-                                  PieChartSectionData(
-                                    value: 20,
-                                    title: "PIX",
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.lightGreen,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final paymentTotals = _expenseTotalsByPaymentMethod();
+              final categoryTotals = _expenseTotalsByCategory();
+              final charts = [
+                _expenseChartCard(
+                  title: 'Expenses by Payment Method',
+                  icon: Icons.credit_card,
+                  totals: paymentTotals,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Card(
-                  elevation: 2,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Category',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
-                        trailing: const Icon(Icons.category_outlined),
-                      ),
-                      SizedBox(
-                        height: 160,
-                        child: Center(
-                          child: SizedBox(
-                            width: 160,
-                            height: 160,
-                            child: PieChart(
-                              PieChartData(
-                                sections: [
-                                  PieChartSectionData(
-                                    value: 20,
-                                    title: 'Transport',
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.red,
-                                  ),
-                                  PieChartSectionData(
-                                    value: 20,
-                                    title: 'Food',
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.lightGreen,
-                                  ),
-                                  PieChartSectionData(
-                                    value: 20,
-                                    title: 'Misc',
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.orangeAccent,
-                                  ),
-                                  PieChartSectionData(
-                                    value: 20,
-                                    title: 'Fun',
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.blueAccent,
-                                  ),
-                                  PieChartSectionData(
-                                    value: 20,
-                                    title: 'Investments',
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.greenAccent,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
+                _expenseChartCard(
+                  title: 'Expenses by Category',
+                  icon: Icons.category_outlined,
+                  totals: categoryTotals,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  elevation: 2,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Income / Week',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: Text("Average: R\$ 2.260"),
-                        trailing: const Icon(
-                          Icons.circle,
-                          color: Colors.teal,
-                          size: 12,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: 140,
-                              child: LineChart(
-                                LineChartData(
-                                  minX: 0,
-                                  maxX: 3,
-                                  minY: 0,
-                                  maxY: 1000,
-                                  gridData: FlGridData(show: false),
-                                  titlesData: FlTitlesData(show: false),
-                                  borderData: FlBorderData(show: false),
-                                  lineBarsData: [
-                                    LineChartBarData(
-                                      spots: const [
-                                        FlSpot(0, 1000),
-                                        FlSpot(1, 660),
-                                        FlSpot(2, 350),
-                                        FlSpot(3, 250),
-                                      ],
-                                      isCurved: true,
-                                      color: Colors.teal,
-                                      barWidth: 3,
-                                      dotData: FlDotData(show: true),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Card(
-                  elevation: 2,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Expenses / Week',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: Text("Average: R\$ 1.070"),
-                        trailing: const Icon(
-                          Icons.circle,
-                          color: Colors.red,
-                          size: 12,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: 140,
-                              child: LineChart(
-                                LineChartData(
-                                  minX: 0,
-                                  maxX: 3,
-                                  minY: 0,
-                                  maxY: 1500,
-                                  gridData: FlGridData(show: false),
-                                  titlesData: FlTitlesData(show: false),
-                                  borderData: FlBorderData(show: false),
-                                  lineBarsData: [
-                                    LineChartBarData(
-                                      spots: const [
-                                        FlSpot(0, 820),
-                                        FlSpot(1, 1150),
-                                        FlSpot(2, 930),
-                                        FlSpot(3, 1380),
-                                      ],
-                                      isCurved: true,
-                                      color: Colors.red,
-                                      barWidth: 3,
-                                      dotData: FlDotData(show: true),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+              ];
+              if (constraints.maxWidth < 600) {
+                return Column(children: [for (final chart in charts) chart]);
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final chart in charts)
+                    Expanded(child: chart),
+                ],
+              );
+            },
           ),
         ],
       ),
