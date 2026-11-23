@@ -115,7 +115,7 @@ class _ExpensesFormState extends State<ExpensesForm> {
           child: Column(children: [
             _card('Value', Icons.arrow_downward, TextFormField(
               controller: _valueController,
-              decoration: const InputDecoration(prefix: Text("+ R\$ ", style: TextStyle(color: color),), filled: true, border: InputBorder.none),
+              decoration: const InputDecoration(prefix: Text("- R\$ ", style: TextStyle(color: color),), filled: true, border: InputBorder.none),
               style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]'))],
