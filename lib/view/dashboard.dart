@@ -302,7 +302,6 @@ class DashboardState extends State<Dashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
           LayoutBuilder(
             builder: (context, constraints) {
               final paymentTotals = _expenseTotalsByPaymentMethod();
@@ -326,7 +325,7 @@ class DashboardState extends State<Dashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   for (final chart in charts)
-                    Expanded(child: Padding(padding: const EdgeInsets.only(right: 8), child: chart)),
+                    Expanded(child: chart),
                 ],
               );
             },
