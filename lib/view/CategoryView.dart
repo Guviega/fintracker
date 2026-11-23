@@ -1,4 +1,5 @@
 import 'package:fintracker/imdb.dart';
+import 'package:fintracker/main.dart';
 import 'package:fintracker/model/category.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +23,7 @@ class _CategoryViewState extends State<CategoryView> {
   String? _validateName(String? value, {Category? editingCategory}) {
     final name = value?.trim() ?? '';
     if (name.isEmpty) return 'Enter a category name';
-    if (name.length > 50) return 'Use 50 characters or fewer';
+    if (name.length > 50) return 'Use 20 characters or fewer';
 
     final alreadyExists = Imdb.categoryList.any((category) {
       return !identical(category, editingCategory) &&
@@ -33,6 +34,12 @@ class _CategoryViewState extends State<CategoryView> {
   }
 
   void _createCategory() {
+    if (Imdb.categoryList.length >= MyApp.category_limit) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You can have up to ${MyApp.category_limit} categories')),
+      );
+      return;
+    }
     if (!_createFormKey.currentState!.validate()) return;
 
     setState(() {
@@ -51,6 +58,20 @@ class _CategoryViewState extends State<CategoryView> {
     }
 
     setState(() => category.name = value.trim());
+  }
+
+  void _deleteCategory(Category category) {
+    final hasExpenses = Imdb.expensesList.any(
+      (expense) => identical(expense.category, category),
+    );
+    if (hasExpenses) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This category is used by expenses')),
+      );
+      return;
+    }
+
+    setState(() => Imdb.categoryList.remove(category));
   }
 
   @override
@@ -99,6 +120,7 @@ class _CategoryViewState extends State<CategoryView> {
                   validateName: (value) =>
                       _validateName(value, editingCategory: category),
                   onSave: (value) => _saveCategory(category, value),
+                  onDelete: () => _deleteCategory(category),
                 ),
               );
             },
@@ -115,11 +137,13 @@ class _CategoryNameEditor extends StatefulWidget {
     required this.category,
     required this.validateName,
     required this.onSave,
+    required this.onDelete,
   });
 
   final Category category;
   final String? Function(String?) validateName;
   final ValueChanged<String> onSave;
+  final VoidCallback onDelete;
 
   @override
   State<_CategoryNameEditor> createState() => _CategoryNameEditorState();
@@ -191,6 +215,11 @@ class _CategoryNameEditorState extends State<_CategoryNameEditor> {
                 IconButton(onPressed: _cancel, icon: const Icon(Icons.close)),
                 IconButton(onPressed: _save, icon: const Icon(Icons.check)),
               ],
+              IconButton(
+                tooltip: 'Delete category',
+                onPressed: widget.onDelete,
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+              ),
             ],
           ),
         ),

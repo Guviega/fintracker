@@ -15,6 +15,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  static final category_limit = 12;
   const MyApp({super.key});
 
   @override

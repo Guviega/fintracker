@@ -1,6 +1,5 @@
 import 'package:fintracker/imdb.dart';
-import 'package:fintracker/view/IncomeView.dart';
-import 'package:fintracker/view/home_page.dart';
+import 'package:fintracker/model/payment_method.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +20,21 @@ class Dashboard extends StatefulWidget {
 }
 
 class DashboardState extends State<Dashboard> {
+  static const _chartColors = <Color>[
+    Colors.red,
+    Colors.lightGreen,
+    Colors.blue,
+    Colors.orange,
+    Colors.purple,
+    Colors.teal,
+    Colors.amber,
+    Colors.indigo,
+    Colors.yellowAccent,
+    Colors.deepOrange,
+    Colors.pink,
+    Colors.greenAccent
+  ];
+
   bool isOnProfit() {
     return Imdb.getTotalResult() >= 0;
   }
@@ -32,6 +46,141 @@ class DashboardState extends State<Dashboard> {
       (_) => '.',
     );
     return 'R\$ $whole,${parts[1]}';
+  }
+
+  List<MapEntry<String, double>> _expenseTotalsByPaymentMethod() {
+    final totalsByMethod = <PaymentMethod, double>{};
+    for (final expense in Imdb.expensesList) {
+      totalsByMethod.update(
+        expense.paymentMethod,
+        (total) => total + expense.value,
+        ifAbsent: () => expense.value,
+      );
+    }
+    final totals = totalsByMethod.entries
+        .map((entry) => MapEntry(entry.key.name, entry.value))
+        .toList();
+    totals.sort((a, b) => b.value.compareTo(a.value));
+    return totals;
+  }
+
+  List<MapEntry<String, double>> _expenseTotalsByCategory() {
+    final totalsByCategory = <String, double>{};
+    for (final expense in Imdb.expensesList) {
+      totalsByCategory.update(
+        expense.category.name,
+        (total) => total + expense.value,
+        ifAbsent: () => expense.value,
+      );
+    }
+    final totals = totalsByCategory.entries.toList();
+    totals.sort((a, b) => b.value.compareTo(a.value));
+    return totals;
+  }
+
+  double _sumTotals(List<MapEntry<String, double>> totals) {
+    var sum = 0.0;
+    for (final entry in totals) {
+      sum += entry.value;
+    }
+    return sum;
+  }
+
+  List<PieChartSectionData> _buildChartSections(
+    List<MapEntry<String, double>> totals,
+    double grandTotal,
+  ) {
+    final sections = <PieChartSectionData>[];
+    for (var i = 0; i < totals.length; i++) {
+      final entry = totals[i];
+      final percentage = (entry.value / grandTotal * 100).round();
+      sections.add(
+        PieChartSectionData(
+          value: entry.value,
+          title: '$percentage%',
+          titleStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            color: Colors.white,
+          ),
+          radius: 48,
+          color: _chartColors[i % _chartColors.length],
+        ),
+      );
+    }
+    return sections;
+  }
+
+  Widget _buildChartLegend(List<MapEntry<String, double>> totals) {
+    return Column(
+      children: [
+        for (var i = 0; i < totals.length; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: _chartColors[i % _chartColors.length],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(totals[i].key, overflow: TextOverflow.ellipsis),
+                ),
+                Text(_formatCurrency(totals[i].value)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _expenseChartCard({
+    required String title,
+    required IconData icon,
+    required List<MapEntry<String, double>> totals,
+  }) {
+    final grandTotal = _sumTotals(totals);
+
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              trailing: Icon(icon),
+            ),
+            if (totals.isEmpty)
+              const SizedBox(
+                height: 160,
+                child: Center(child: Text('No expenses to display')),
+              )
+            else ...[
+              SizedBox(
+                height: 160,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 28,
+                    sections: _buildChartSections(totals, grandTotal),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildChartLegend(totals),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -52,7 +201,7 @@ class DashboardState extends State<Dashboard> {
               ),
               title: const Text("Total Result", style: TextStyle(fontSize: 14)),
               subtitle: Text(
-                "+ ${_formatCurrency(Imdb.getTotalResult())}",
+                _formatCurrency(Imdb.getTotalResult()),
                 style: TextStyle(
                   color: isOnProfit() ? Colors.green : Colors.red,
                   fontWeight: .bold,
@@ -153,115 +302,33 @@ class DashboardState extends State<Dashboard> {
               ),
             ],
           ),
-          SizedBox(width: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  elevation: 1,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Payment Method',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
-                        trailing: const Icon(Icons.credit_card),
-                      ),
-                      SizedBox(
-                        height: 160,
-                        child: Center(
-                          child: SizedBox(
-                            width: 160,
-                            height: 160,
-                            child: PieChart(
-                              PieChartData(
-                                sections: [
-                                  PieChartSectionData(
-                                    value: 50,
-                                    title: 'Credit Card',
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.red,
-                                  ),
-                                  PieChartSectionData(
-                                    value: 20,
-                                    title: "PIX",
-                                    titleStyle: TextStyle(fontWeight: .bold),
-                                    showTitle: true,
-                                    radius: 25,
-                                    color: Colors.lightGreen,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final paymentTotals = _expenseTotalsByPaymentMethod();
+              final categoryTotals = _expenseTotalsByCategory();
+              final charts = [
+                _expenseChartCard(
+                  title: 'Expenses by Payment Method',
+                  icon: Icons.credit_card,
+                  totals: paymentTotals,
                 ),
-              ),
-              Expanded(
-                child: Card(
-                  elevation: 1,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: const Text(
-                          'Category',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [],
-                        ),
-                        trailing: const Icon(Icons.category_outlined),
-                      ),
-                      SizedBox(
-                        height: 160,
-                        child: Center(
-                          child: SizedBox(
-                            width: 160,
-                            height: 160,
-                            child: PieChart(
-                              PieChartData(
-                                sections: [
-                                  for (int i = 0; i < 8; i++)
-                                    PieChartSectionData(
-                                      value: 20,
-                                      title: 'Transport',
-                                      titleStyle: TextStyle(fontWeight: .bold),
-                                      showTitle: true,
-                                      radius: 25,
-                                      color: Colors.red,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
+                _expenseChartCard(
+                  title: 'Expenses by Category',
+                  icon: Icons.category_outlined,
+                  totals: categoryTotals,
                 ),
-              ),
-            ],
+              ];
+              if (constraints.maxWidth < 600) {
+                return Column(children: [for (final chart in charts) chart]);
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final chart in charts)
+                    Expanded(child: chart),
+                ],
+              );
+            },
           ),
         ],
       ),
