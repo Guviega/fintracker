@@ -1,19 +1,61 @@
-import 'package:fintracker/imdb.dart';
+import 'package:fintracker/database/database_helper.dart';
 import 'package:fintracker/model/income.dart';
 import 'package:fintracker/view/form/income_form.dart';
 import 'package:flutter/material.dart';
 
 class IncomeView extends StatefulWidget {
-  static const routeName = "income_page";
+  static const routeName = 'income_page';
 
   const IncomeView({super.key});
-
 
   @override
   State<IncomeView> createState() => _IncomeViewState();
 }
 
 class _IncomeViewState extends State<IncomeView> {
+  List<Income> _incomes = [];
+  bool _isLoading = true;
+  bool _hasLoadError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadIncomes();
+  }
+
+  Future<void> _loadIncomes() async {
+    try {
+      final incomes = await DatabaseHelper.instance.getIncomes();
+      if (!mounted) return;
+      setState(() {
+        _incomes = incomes;
+        _isLoading = false;
+        _hasLoadError = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = true;
+      });
+    }
+  }
+
+  Future<void> _deleteIncome(Income income) async {
+    final id = income.id;
+    if (id == null) return;
+
+    try {
+      await DatabaseHelper.instance.deleteIncome(id);
+      await _loadIncomes();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete the income')),
+      );
+    }
+  }
+
   String _formatDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -31,13 +73,20 @@ class _IncomeViewState extends State<IncomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final incomes = Imdb.incomeList.toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_hasLoadError) {
+      return Center(
+        child: TextButton(
+          onPressed: _loadIncomes,
+          child: const Text('Could not load income. Retry.'),
+        ),
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (incomes.isEmpty)
+        if (_incomes.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 48),
             child: Center(
@@ -45,7 +94,7 @@ class _IncomeViewState extends State<IncomeView> {
             ),
           )
         else
-          for (final income in incomes) _buildIncomeCard(income),
+          for (final income in _incomes) _buildIncomeCard(income),
       ],
     );
   }
@@ -56,8 +105,12 @@ class _IncomeViewState extends State<IncomeView> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          await Navigator.pushNamed(context, IncomeForm.routeName, arguments: income);
-          if (mounted) setState(() {});
+          await Navigator.pushNamed(
+            context,
+            IncomeForm.routeName,
+            arguments: income,
+          );
+          if (mounted) await _loadIncomes();
         },
         child: Column(
           children: [
@@ -71,7 +124,7 @@ class _IncomeViewState extends State<IncomeView> {
               subtitle: Text(income.source),
               trailing: IconButton(
                 tooltip: 'Delete income',
-                onPressed: () => setState(() => Imdb.incomeList.remove(income)),
+                onPressed: () => _deleteIncome(income),
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
               ),
             ),

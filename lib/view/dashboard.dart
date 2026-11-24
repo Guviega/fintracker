@@ -1,4 +1,5 @@
-import 'package:fintracker/imdb.dart';
+import 'package:fintracker/database/database_helper.dart';
+import 'package:fintracker/database/monthly_dashboard_data.dart';
 import 'package:fintracker/view/widgets/expense_chart_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -14,23 +15,19 @@ class Dashboard extends StatefulWidget {
   final VoidCallback onExpensesTap;
 
   @override
-  State<StatefulWidget> createState() {
-    return DashboardState();
-  }
+  State<Dashboard> createState() => DashboardState();
 }
 
 class DashboardState extends State<Dashboard> {
   late DateTime _selectedMonth;
+  late Future<MonthlyDashboardData> _dashboardFuture;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _selectedMonth = DateTime(now.year, now.month);
-  }
-
-  bool isOnProfit() {
-    return Imdb.getTotalResultbyMonth(_selectedMonth) >= 0;
+    _dashboardFuture = DatabaseHelper.instance.getDashboardData(_selectedMonth);
   }
 
   String _formatCurrency(double value) {
@@ -42,25 +39,54 @@ class DashboardState extends State<Dashboard> {
     return 'R\$ $whole,${parts[1]}';
   }
 
-  List<MapEntry<String, double>> _expenseTotalsByPaymentMethod() {
-    final totals = Imdb.getExpenseTotalsByPaymentMethod(
-      _selectedMonth,
-    ).entries.map((entry) => MapEntry(entry.key.name, entry.value)).toList();
-    totals.sort((a, b) => b.value.compareTo(a.value));
-    return totals;
+  void _selectMonth(DateTime month) {
+    setState(() {
+      _selectedMonth = month;
+      _dashboardFuture = DatabaseHelper.instance.getDashboardData(month);
+    });
   }
 
-  List<MapEntry<String, double>> _expenseTotalsByCategory() {
-    final totals = Imdb.getExpenseTotalsByCategory(
-      _selectedMonth,
-    ).entries.toList();
-    totals.sort((a, b) => b.value.compareTo(a.value));
-    return totals;
+  List<MapEntry<String, double>> _sortedEntries(Map<String, double> values) {
+    final entries = values.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return entries;
   }
 
   @override
   Widget build(BuildContext context) {
-    final availableMonths = Imdb.getAvailableMonths();
+    return FutureBuilder<MonthlyDashboardData>(
+      future: _dashboardFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Center(
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _dashboardFuture = DatabaseHelper.instance.getDashboardData(
+                    _selectedMonth,
+                  );
+                });
+              },
+              child: const Text('Could not load the dashboard. Retry.'),
+            ),
+          );
+        }
+        return _buildDashboard(snapshot.data!);
+      },
+    );
+  }
+
+  Widget _buildDashboard(MonthlyDashboardData data) {
+    final isOnProfit = data.totalResult >= 0;
+    final paymentTotals =
+        data.expenseTotalsByPaymentMethod.entries
+            .map((entry) => MapEntry(entry.key.name, entry.value))
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+    final categoryTotals = _sortedEntries(data.expenseTotalsByCategory);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -85,15 +111,14 @@ class DashboardState extends State<Dashboard> {
                       isExpanded: true,
                       value: _selectedMonth,
                       items: [
-                        for (final month in availableMonths)
+                        for (final month in data.availableMonths)
                           DropdownMenuItem(
                             value: month,
                             child: Text(DateFormat.yMMMM().format(month)),
                           ),
                       ],
                       onChanged: (month) {
-                        if (month == null) return;
-                        setState(() => _selectedMonth = month);
+                        if (month != null) _selectMonth(month);
                       },
                     ),
                   ),
@@ -107,28 +132,28 @@ class DashboardState extends State<Dashboard> {
               contentPadding: const EdgeInsets.all(16),
               leading: Icon(
                 Icons.account_balance,
-                color: isOnProfit() ? Colors.green : Colors.red,
+                color: isOnProfit ? Colors.green : Colors.red,
                 size: 36,
               ),
-              title: const Text("Total Result", style: TextStyle(fontSize: 14)),
+              title: const Text('Total Result', style: TextStyle(fontSize: 14)),
               subtitle: Text(
-                _formatCurrency(Imdb.getTotalResultbyMonth(_selectedMonth)),
+                _formatCurrency(data.totalResult),
                 style: TextStyle(
-                  color: isOnProfit() ? Colors.green : Colors.red,
-                  fontWeight: .bold,
+                  color: isOnProfit ? Colors.green : Colors.red,
+                  fontWeight: FontWeight.bold,
                   fontSize: 22,
                 ),
               ),
               trailing: Text(
-                Imdb.getTotalResultbyMonth(_selectedMonth) == 0
+                data.totalResult == 0
                     ? ''
-                    : isOnProfit()
+                    : isOnProfit
                     ? 'PROFIT'
                     : 'LOSS',
                 style: TextStyle(
                   fontSize: 14,
-                  color: isOnProfit() ? Colors.green : Colors.red,
-                  fontWeight: .bold,
+                  color: isOnProfit ? Colors.green : Colors.red,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -156,18 +181,18 @@ class DashboardState extends State<Dashboard> {
                         ),
                         Row(
                           children: [
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Text(
-                              '+ ${_formatCurrency(Imdb.getTotalIncomebyMonth(_selectedMonth))}',
-                              style: TextStyle(
+                              '+ ${_formatCurrency(data.totalIncome)}',
+                              style: const TextStyle(
                                 color: Colors.green,
-                                fontWeight: .bold,
+                                fontWeight: FontWeight.bold,
                                 fontSize: 18,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
@@ -196,7 +221,7 @@ class DashboardState extends State<Dashboard> {
                           children: [
                             const SizedBox(width: 12),
                             Text(
-                              "- ${_formatCurrency(Imdb.getTotalExpensesbyMonth(_selectedMonth))}",
+                              '- ${_formatCurrency(data.totalExpenses)}',
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontWeight: FontWeight.bold,
@@ -215,26 +240,24 @@ class DashboardState extends State<Dashboard> {
           ),
           LayoutBuilder(
             builder: (context, constraints) {
-              final paymentTotals = _expenseTotalsByPaymentMethod();
-              final categoryTotals = _expenseTotalsByCategory();
               final charts = [
                 ExpenseChartCard(
                   title: 'Expenses by Payment Method',
                   icon: Icons.credit_card,
                   totals: paymentTotals,
-                  selectedMonth: _selectedMonth,
+                  grandTotal: data.totalExpenses,
                   formatCurrency: _formatCurrency,
                 ),
                 ExpenseChartCard(
                   title: 'Expenses by Category',
                   icon: Icons.category_outlined,
                   totals: categoryTotals,
-                  selectedMonth: _selectedMonth,
+                  grandTotal: data.totalExpenses,
                   formatCurrency: _formatCurrency,
                 ),
               ];
               if (constraints.maxWidth < 600) {
-                return Column(children: [for (final chart in charts) chart]);
+                return Column(children: charts);
               }
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

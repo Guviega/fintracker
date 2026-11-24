@@ -1,10 +1,10 @@
-import 'package:fintracker/imdb.dart';
+import 'package:fintracker/database/database_helper.dart';
 import 'package:fintracker/model/expense.dart';
 import 'package:fintracker/view/form/expenses_form.dart';
 import 'package:flutter/material.dart';
 
 class ExpenseView extends StatefulWidget {
-  static const routeName = "expenses_page";
+  static const routeName = 'expenses_page';
 
   const ExpenseView({super.key});
 
@@ -13,6 +13,49 @@ class ExpenseView extends StatefulWidget {
 }
 
 class _ExpenseViewState extends State<ExpenseView> {
+  List<Expense> _expenses = [];
+  bool _isLoading = true;
+  bool _hasLoadError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExpenses();
+  }
+
+  Future<void> _loadExpenses() async {
+    try {
+      final expenses = await DatabaseHelper.instance.getExpenses();
+      if (!mounted) return;
+      setState(() {
+        _expenses = expenses;
+        _isLoading = false;
+        _hasLoadError = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = true;
+      });
+    }
+  }
+
+  Future<void> _deleteExpense(Expense expense) async {
+    final id = expense.id;
+    if (id == null) return;
+
+    try {
+      await DatabaseHelper.instance.deleteExpense(id);
+      await _loadExpenses();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete the expense')),
+      );
+    }
+  }
+
   String _formatDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -28,15 +71,30 @@ class _ExpenseViewState extends State<ExpenseView> {
     return 'R\$ $whole,${parts[1]}';
   }
 
+  String _formatPaymentMethod(String method) {
+    return method
+        .toLowerCase()
+        .split('_')
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final expenses = Imdb.expensesList.toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_hasLoadError) {
+      return Center(
+        child: TextButton(
+          onPressed: _loadExpenses,
+          child: const Text('Could not load expenses. Retry.'),
+        ),
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (expenses.isEmpty)
+        if (_expenses.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 48),
             child: Center(
@@ -44,7 +102,7 @@ class _ExpenseViewState extends State<ExpenseView> {
             ),
           )
         else
-          for (final expense in expenses) _buildExpenseCard(expense),
+          for (final expense in _expenses) _buildExpenseCard(expense),
       ],
     );
   }
@@ -55,8 +113,12 @@ class _ExpenseViewState extends State<ExpenseView> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          await Navigator.pushNamed(context, ExpensesForm.routeName, arguments: expense);
-          if (mounted) setState(() {});
+          await Navigator.pushNamed(
+            context,
+            ExpensesForm.routeName,
+            arguments: expense,
+          );
+          if (mounted) await _loadExpenses();
         },
         child: Column(
           children: [
@@ -72,8 +134,7 @@ class _ExpenseViewState extends State<ExpenseView> {
               ),
               trailing: IconButton(
                 tooltip: 'Delete expense',
-                onPressed: () =>
-                    setState(() => Imdb.expensesList.remove(expense)),
+                onPressed: () => _deleteExpense(expense),
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
               ),
             ),
@@ -98,13 +159,5 @@ class _ExpenseViewState extends State<ExpenseView> {
         ),
       ),
     );
-  }
-
-  String _formatPaymentMethod(String method) {
-    return method
-        .toLowerCase()
-        .split('_')
-        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
   }
 }

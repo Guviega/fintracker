@@ -2,6 +2,7 @@ import 'package:fintracker/model/category.dart';
 import 'package:fintracker/model/payment_method.dart';
 
 class Expense {
+  final int? id;
   String description;
   DateTime date;
   double value;
@@ -9,6 +10,7 @@ class Expense {
   Category category;
 
   Expense({
+    this.id,
     required this.description,
     required this.date,
     required this.value,
