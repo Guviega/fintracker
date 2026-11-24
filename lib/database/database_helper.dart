@@ -12,6 +12,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const _databaseName = 'fintracker.db';
+  static const _databaseVersion = 1;
 
   Future<Database>? _databaseFuture;
 
@@ -30,6 +31,7 @@ class DatabaseHelper {
 
       return await openDatabase(
         databasePath,
+        version: _databaseVersion,
         onConfigure: _configureDatabase,
         onCreate: _createDatabase,
       );
