@@ -1,7 +1,7 @@
 import 'package:fintracker/imdb.dart';
 import 'package:fintracker/model/income.dart';
+import 'package:fintracker/view/form/widgets/income_form_fields.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class IncomeForm extends StatefulWidget {
@@ -29,7 +29,9 @@ class _IncomeFormState extends State<IncomeForm> {
     super.initState();
     final income = widget.income;
     if (income != null) {
-      _valueController.text = income.value.toStringAsFixed(2).replaceAll('.', ',');
+      _valueController.text = income.value
+          .toStringAsFixed(2)
+          .replaceAll('.', ',');
       _descriptionController.text = income.description;
       _sourceController.text = income.source;
       _date = income.date;
@@ -58,8 +60,8 @@ class _IncomeFormState extends State<IncomeForm> {
     final selected = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime(DateTime.now().year-100),
-      lastDate: DateTime(DateTime.now().year+1),
+      firstDate: DateTime(DateTime.now().year - 100),
+      lastDate: DateTime(DateTime.now().year + 1),
     );
     if (selected != null) {
       setState(() {
@@ -74,12 +76,14 @@ class _IncomeFormState extends State<IncomeForm> {
     final value = _parseValue(_valueController.text)!;
     final income = _income;
     if (income == null) {
-      Imdb.incomeList.add(Income(
-        description: _descriptionController.text.trim(),
-        source: _sourceController.text.trim(),
-        date: _date,
-        value: value,
-      ));
+      Imdb.incomeList.add(
+        Income(
+          description: _descriptionController.text.trim(),
+          source: _sourceController.text.trim(),
+          date: _date,
+          value: value,
+        ),
+      );
     } else {
       income
         ..description = _descriptionController.text.trim()
@@ -94,8 +98,12 @@ class _IncomeFormState extends State<IncomeForm> {
   Widget build(BuildContext context) {
     const color = Colors.green;
     final isEditing = _income != null;
+
     return Scaffold(
-      appBar: AppBar(elevation: 2, title: Text(isEditing ? 'Edit Income' : 'Register Income')),
+      appBar: AppBar(
+        elevation: 2,
+        title: Text(isEditing ? 'Edit Income' : 'Register Income'),
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: color,
         onPressed: _save,
@@ -106,56 +114,28 @@ class _IncomeFormState extends State<IncomeForm> {
         key: _formKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Column(children: [
-            _fieldCard('Value', Icons.arrow_upward, TextFormField(
-              controller: _valueController,
-              maxLength: 10,
-              decoration: const InputDecoration(prefix: Text("+ R\$ ", style: TextStyle(color: color),), filled: true, border: InputBorder.none),
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]'))],
-              validator: (text) {
-                final value = _parseValue(text);
-                if (value == null || value <= 0) return 'Enter a value greater than zero';
-                return null;
-              },
-            )),
-            const SizedBox(height: 8),
-            _fieldCard('Description', Icons.description, TextFormField(
-              controller: _descriptionController,
-              maxLength: 20,
-              decoration: const InputDecoration(filled: true, border: InputBorder.none),
-              validator: (text) => (text == null || text.trim().isEmpty) ? 'Enter a description' : null,
-            ), extra: Column(children: [
-              ListTile(leading: const Icon(Icons.account_balance, color: color), title: const Text('Source')),
-              Padding(padding: const EdgeInsets.all(8), child: TextFormField(
-                controller: _sourceController,
-                maxLength: 20,
-                decoration: const InputDecoration(filled: true, border: InputBorder.none),
-                validator: (text) => (text == null || text.trim().isEmpty) ? 'Enter a source' : null,
-              )),
-            ])),
-            const SizedBox(height: 8),
-            _fieldCard('Date', Icons.calendar_month, TextFormField(
-              controller: _dateController,
-              readOnly: true,
-              onTap: _selectDate,
-              decoration: const InputDecoration(filled: true, border: InputBorder.none, suffixIcon: Icon(Icons.date_range)),
-            )),
-          ]),
+          child: IncomeFormFields(
+            valueController: _valueController,
+            descriptionController: _descriptionController,
+            sourceController: _sourceController,
+            dateController: _dateController,
+            onSelectDate: _selectDate,
+            valueValidator: (text) {
+              final value = _parseValue(text);
+              if (value == null || value <= 0) {
+                return 'Enter a value greater than zero';
+              }
+              return null;
+            },
+            descriptionValidator: (text) =>
+                (text == null || text.trim().isEmpty)
+                ? 'Enter a description'
+                : null,
+            sourceValidator: (text) =>
+                (text == null || text.trim().isEmpty) ? 'Enter a source' : null,
+          ),
         ),
       ),
     );
   }
-
-  Widget _fieldCard(String title, IconData icon, Widget field, {Widget? extra}) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(children: [
-        ListTile(leading: Icon(icon, color: Colors.green), title: Text(title)),
-        Padding(padding: const EdgeInsets.all(8), child: field),
-        if (extra != null) extra,
-      ]),
-    ),
-  );
 }

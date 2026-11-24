@@ -1,8 +1,8 @@
 import 'package:fintracker/imdb.dart';
 import 'package:fintracker/model/expense.dart';
 import 'package:fintracker/model/payment_method.dart';
+import 'package:fintracker/view/form/widgets/expenses_form_fields.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class ExpensesForm extends StatefulWidget {
@@ -31,7 +31,9 @@ class _ExpensesFormState extends State<ExpensesForm> {
     super.initState();
     final expense = widget.expense;
     if (expense != null) {
-      _valueController.text = expense.value.toStringAsFixed(2).replaceAll('.', ',');
+      _valueController.text = expense.value
+          .toStringAsFixed(2)
+          .replaceAll('.', ',');
       _descriptionController.text = expense.description;
       _date = expense.date;
       _paymentMethod = expense.paymentMethod;
@@ -60,8 +62,8 @@ class _ExpensesFormState extends State<ExpensesForm> {
     final selected = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime(DateTime.now().year-100),
-      lastDate: DateTime(DateTime.now().year+1),
+      firstDate: DateTime(DateTime.now().year - 100),
+      lastDate: DateTime(DateTime.now().year + 1),
     );
     if (selected != null) {
       setState(() {
@@ -77,13 +79,15 @@ class _ExpensesFormState extends State<ExpensesForm> {
     final category = Imdb.categoryList.elementAt(_selectedCategory);
     final value = _parseValue(_valueController.text)!;
     if (expense == null) {
-      Imdb.expensesList.add(Expense(
-        description: _descriptionController.text.trim(),
-        date: _date,
-        value: value,
-        paymentMethod: _paymentMethod!,
-        category: category,
-      ));
+      Imdb.expensesList.add(
+        Expense(
+          description: _descriptionController.text.trim(),
+          date: _date,
+          value: value,
+          paymentMethod: _paymentMethod!,
+          category: category,
+        ),
+      );
     } else {
       expense
         ..description = _descriptionController.text.trim()
@@ -100,8 +104,12 @@ class _ExpensesFormState extends State<ExpensesForm> {
     const color = Colors.red;
     final isEditing = _expense != null;
     final categories = Imdb.categoryList.toList();
+
     return Scaffold(
-      appBar: AppBar(elevation: 2, title: Text(isEditing ? 'Edit Expense' : 'Register Expense')),
+      appBar: AppBar(
+        elevation: 2,
+        title: Text(isEditing ? 'Edit Expense' : 'Register Expense'),
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: color,
         onPressed: _save,
@@ -112,93 +120,36 @@ class _ExpensesFormState extends State<ExpensesForm> {
         key: _formKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Column(children: [
-            _fieldCard('Value', Icons.arrow_downward, TextFormField(
-              controller: _valueController,
-              maxLength: 10,
-              decoration: const InputDecoration(prefix: Text("- R\$ ", style: TextStyle(color: color),), filled: true, border: InputBorder.none),
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]'))],
-              validator: (text) {
-                final value = _parseValue(text);
-                if (value == null || value <= 0) return 'Enter a value greater than zero';
-                return null;
-              },
-            )),
-            const SizedBox(height: 8),
-            _fieldCard('Description', Icons.description, TextFormField(
-              controller: _descriptionController,
-              maxLength: 20,
-              decoration: const InputDecoration(filled: true, border: InputBorder.none),
-              validator: (text) => (text == null || text.trim().isEmpty) ? 'Enter a description' : null,
-            )),
-            const SizedBox(height: 8),
-            _fieldCard('Category', Icons.category, FormField<int>(
-              initialValue: _selectedCategory,
-              validator: (_) => _selectedCategory < 0 ? 'Select a category' : null,
-              builder: (state) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Wrap(spacing: 8, children: [
-                  for (var i = 0; i < categories.length; i++) ChoiceChip(
-                    label: Text(categories[i].name),
-                    selected: _selectedCategory == i,
-                    onSelected: (_) => setState(() {
-                      _selectedCategory = i;
-                      state.didChange(i);
-                    }),
-                    selectedColor: color,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                  ),
-                ]),
-                if (state.hasError) Padding(
-                  padding: const EdgeInsets.only(top: 8, left: 12),
-                  child: Text(state.errorText!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                ),
-              ]),
-            )),
-            const SizedBox(height: 8),
-            _fieldCard('Payment Method', Icons.credit_card, FormField<PaymentMethod>(
-              initialValue: _paymentMethod,
-              validator: (_) => _paymentMethod == null ? 'Select a payment method' : null,
-              builder: (state) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Wrap(spacing: 8, children: [
-                  for (final method in PaymentMethod.values) ChoiceChip(
-                    label: Text(method.name),
-                    selected: _paymentMethod == method,
-                    onSelected: (_) => setState(() {
-                      _paymentMethod = method;
-                      state.didChange(method);
-                    }),
-                    selectedColor: color,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                  ),
-                ]),
-                if (state.hasError) Padding(
-                  padding: const EdgeInsets.only(top: 8, left: 12),
-                  child: Text(state.errorText!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                ),
-              ]),
-            )),
-            const SizedBox(height: 8),
-            _fieldCard('Date', Icons.calendar_month, TextFormField(
-              controller: _dateController,
-              readOnly: true,
-              onTap: _selectDate,
-              decoration: const InputDecoration(filled: true, border: InputBorder.none, suffixIcon: Icon(Icons.date_range)),
-            )),
-          ]),
+          child: ExpensesFormFields(
+            valueController: _valueController,
+            descriptionController: _descriptionController,
+            dateController: _dateController,
+            categories: categories,
+            selectedCategory: _selectedCategory,
+            categoryValidator: (_) =>
+                _selectedCategory < 0 ? 'Select a category' : null,
+            onCategorySelected: (index) =>
+                setState(() => _selectedCategory = index),
+            paymentMethod: _paymentMethod,
+            paymentMethodValidator: (_) =>
+                _paymentMethod == null ? 'Select a payment method' : null,
+            onPaymentMethodSelected: (method) =>
+                setState(() => _paymentMethod = method),
+            onSelectDate: _selectDate,
+            valueValidator: (text) {
+              final value = _parseValue(text);
+              if (value == null || value <= 0) {
+                return 'Enter a value greater than zero';
+              }
+              return null;
+            },
+            descriptionValidator: (text) =>
+                (text == null || text.trim().isEmpty)
+                ? 'Enter a description'
+                : null,
+          ),
         ),
       ),
     );
   }
-
-  Widget _fieldCard(String title, IconData icon, Widget field) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(children: [
-        ListTile(leading: Icon(icon, color: Colors.red), title: Text(title)),
-        Padding(padding: const EdgeInsets.all(8), child: field),
-      ]),
-    ),
-  );
 }

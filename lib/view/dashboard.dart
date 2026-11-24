@@ -1,5 +1,5 @@
 import 'package:fintracker/imdb.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:fintracker/view/widgets/expense_chart_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -22,21 +22,6 @@ class Dashboard extends StatefulWidget {
 class DashboardState extends State<Dashboard> {
   late DateTime _selectedMonth;
 
-  static const _chartColors = <Color>[
-    Colors.red,
-    Colors.lightGreen,
-    Colors.blue,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
-    Colors.amber,
-    Colors.indigo,
-    Colors.yellowAccent,
-    Colors.deepOrange,
-    Colors.pink,
-    Colors.greenAccent
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -58,114 +43,19 @@ class DashboardState extends State<Dashboard> {
   }
 
   List<MapEntry<String, double>> _expenseTotalsByPaymentMethod() {
-    final totals = Imdb.getExpenseTotalsByPaymentMethod(_selectedMonth).entries
-        .map((entry) => MapEntry(entry.key.name, entry.value))
-        .toList();
+    final totals = Imdb.getExpenseTotalsByPaymentMethod(
+      _selectedMonth,
+    ).entries.map((entry) => MapEntry(entry.key.name, entry.value)).toList();
     totals.sort((a, b) => b.value.compareTo(a.value));
     return totals;
   }
 
   List<MapEntry<String, double>> _expenseTotalsByCategory() {
-    final totals = Imdb.getExpenseTotalsByCategory(_selectedMonth).entries.toList();
+    final totals = Imdb.getExpenseTotalsByCategory(
+      _selectedMonth,
+    ).entries.toList();
     totals.sort((a, b) => b.value.compareTo(a.value));
     return totals;
-  }
-
-  List<PieChartSectionData> _buildChartSections(
-    List<MapEntry<String, double>> totals,
-    double grandTotal,
-  ) {
-    final sections = <PieChartSectionData>[];
-    for (var i = 0; i < totals.length; i++) {
-      final entry = totals[i];
-      final percentage = (entry.value / grandTotal * 100).round();
-      sections.add(
-        PieChartSectionData(
-          value: entry.value,
-          title: '$percentage%',
-          titleStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
-            color: Colors.white,
-          ),
-          radius: 48,
-          color: _chartColors[i % _chartColors.length],
-        ),
-      );
-    }
-    return sections;
-  }
-
-  Widget _buildChartLegend(List<MapEntry<String, double>> totals) {
-    return Column(
-      children: [
-        for (var i = 0; i < totals.length; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Row(
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: _chartColors[i % _chartColors.length],
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(totals[i].key, overflow: TextOverflow.ellipsis),
-                ),
-                Text(_formatCurrency(totals[i].value)),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _expenseChartCard({
-    required String title,
-    required IconData icon,
-    required List<MapEntry<String, double>> totals,
-  }) {
-    final grandTotal = Imdb.getTotalExpensesbyMonth(_selectedMonth);
-
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              trailing: Icon(icon),
-            ),
-            if (totals.isEmpty)
-              const SizedBox(
-                height: 160,
-                child: Center(child: Text('No expenses to display')),
-              )
-            else ...[
-              SizedBox(
-                height: 160,
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 2,
-                    centerSpaceRadius: 28,
-                    sections: _buildChartSections(totals, grandTotal),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildChartLegend(totals),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -185,7 +75,10 @@ class DashboardState extends State<Dashboard> {
                 children: [
                   const Icon(Icons.calendar_month),
                   const SizedBox(width: 12),
-                  const Text('Month', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Month',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButton<DateTime>(
@@ -325,15 +218,19 @@ class DashboardState extends State<Dashboard> {
               final paymentTotals = _expenseTotalsByPaymentMethod();
               final categoryTotals = _expenseTotalsByCategory();
               final charts = [
-                _expenseChartCard(
+                ExpenseChartCard(
                   title: 'Expenses by Payment Method',
                   icon: Icons.credit_card,
                   totals: paymentTotals,
+                  selectedMonth: _selectedMonth,
+                  formatCurrency: _formatCurrency,
                 ),
-                _expenseChartCard(
+                ExpenseChartCard(
                   title: 'Expenses by Category',
                   icon: Icons.category_outlined,
                   totals: categoryTotals,
+                  selectedMonth: _selectedMonth,
+                  formatCurrency: _formatCurrency,
                 ),
               ];
               if (constraints.maxWidth < 600) {
@@ -341,10 +238,7 @@ class DashboardState extends State<Dashboard> {
               }
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final chart in charts)
-                    Expanded(child: chart),
-                ],
+                children: [for (final chart in charts) Expanded(child: chart)],
               );
             },
           ),
