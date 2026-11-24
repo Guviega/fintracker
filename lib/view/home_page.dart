@@ -9,15 +9,14 @@ import 'package:flutter/material.dart';
 class HomePage extends StatefulWidget {
   static const routeName = "initialRoute";
 
-  const HomePage({super.key, required this.title});
-
-  final String title;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  List<String> navigationTitles = ["Dashboard", "Income", "Expenses", "Categories"];
   int currentPageIndex = 0;
   final fab_color = <int, Color>{1: Colors.green, 2: Colors.redAccent};
   final fab_route = <int, String>{
@@ -30,8 +29,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
-        title: Text(widget.title),
-        leading: Icon(Icons.calendar_month),
+        title: Text(navigationTitles[currentPageIndex]),
       ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
@@ -40,24 +38,24 @@ class _HomePageState extends State<HomePage> {
           });
         },
         selectedIndex: currentPageIndex,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             selectedIcon: Icon(Icons.home_filled),
             icon: Icon(Icons.home_outlined),
-            label: "Dashboard",
+            label: navigationTitles[0],
           ),
           NavigationDestination(
             icon: Icon(Icons.arrow_upward_rounded),
-            label: "Income",
+            label: navigationTitles[1],
           ),
           NavigationDestination(
             icon: Icon(Icons.arrow_downward_rounded),
-            label: "Expenses",
+            label: navigationTitles[2],
           ),
           NavigationDestination(
             selectedIcon: Icon(Icons.category),
             icon: Icon(Icons.category_outlined),
-            label: "Categories",
+            label: navigationTitles[3],
           ),
         ],
       ),
