@@ -1,7 +1,7 @@
 import 'package:fintracker/imdb.dart';
-import 'package:fintracker/model/payment_method.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({
@@ -20,6 +20,8 @@ class Dashboard extends StatefulWidget {
 }
 
 class DashboardState extends State<Dashboard> {
+  late DateTime _selectedMonth;
+
   static const _chartColors = <Color>[
     Colors.red,
     Colors.lightGreen,
@@ -35,8 +37,15 @@ class DashboardState extends State<Dashboard> {
     Colors.greenAccent
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedMonth = DateTime(now.year, now.month);
+  }
+
   bool isOnProfit() {
-    return Imdb.getTotalResult() >= 0;
+    return Imdb.getTotalResultbyMonth(_selectedMonth) >= 0;
   }
 
   String _formatCurrency(double value) {
@@ -49,15 +58,7 @@ class DashboardState extends State<Dashboard> {
   }
 
   List<MapEntry<String, double>> _expenseTotalsByPaymentMethod() {
-    final totalsByMethod = <PaymentMethod, double>{};
-    for (final expense in Imdb.expensesList) {
-      totalsByMethod.update(
-        expense.paymentMethod,
-        (total) => total + expense.value,
-        ifAbsent: () => expense.value,
-      );
-    }
-    final totals = totalsByMethod.entries
+    final totals = Imdb.getExpenseTotalsByPaymentMethod(_selectedMonth).entries
         .map((entry) => MapEntry(entry.key.name, entry.value))
         .toList();
     totals.sort((a, b) => b.value.compareTo(a.value));
@@ -65,25 +66,9 @@ class DashboardState extends State<Dashboard> {
   }
 
   List<MapEntry<String, double>> _expenseTotalsByCategory() {
-    final totalsByCategory = <String, double>{};
-    for (final expense in Imdb.expensesList) {
-      totalsByCategory.update(
-        expense.category.name,
-        (total) => total + expense.value,
-        ifAbsent: () => expense.value,
-      );
-    }
-    final totals = totalsByCategory.entries.toList();
+    final totals = Imdb.getExpenseTotalsByCategory(_selectedMonth).entries.toList();
     totals.sort((a, b) => b.value.compareTo(a.value));
     return totals;
-  }
-
-  double _sumTotals(List<MapEntry<String, double>> totals) {
-    var sum = 0.0;
-    for (final entry in totals) {
-      sum += entry.value;
-    }
-    return sum;
   }
 
   List<PieChartSectionData> _buildChartSections(
@@ -144,7 +129,7 @@ class DashboardState extends State<Dashboard> {
     required IconData icon,
     required List<MapEntry<String, double>> totals,
   }) {
-    final grandTotal = _sumTotals(totals);
+    final grandTotal = Imdb.getTotalExpensesbyMonth(_selectedMonth);
 
     return Card(
       elevation: 1,
@@ -185,11 +170,44 @@ class DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final availableMonths = Imdb.getAvailableMonths();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Card(
+            elevation: 1,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month),
+                  const SizedBox(width: 12),
+                  const Text('Month', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButton<DateTime>(
+                      isExpanded: true,
+                      value: _selectedMonth,
+                      items: [
+                        for (final month in availableMonths)
+                          DropdownMenuItem(
+                            value: month,
+                            child: Text(DateFormat.yMMMM().format(month)),
+                          ),
+                      ],
+                      onChanged: (month) {
+                        if (month == null) return;
+                        setState(() => _selectedMonth = month);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           Card(
             elevation: 1,
             child: ListTile(
@@ -201,7 +219,7 @@ class DashboardState extends State<Dashboard> {
               ),
               title: const Text("Total Result", style: TextStyle(fontSize: 14)),
               subtitle: Text(
-                _formatCurrency(Imdb.getTotalResult()),
+                _formatCurrency(Imdb.getTotalResultbyMonth(_selectedMonth)),
                 style: TextStyle(
                   color: isOnProfit() ? Colors.green : Colors.red,
                   fontWeight: .bold,
@@ -209,7 +227,7 @@ class DashboardState extends State<Dashboard> {
                 ),
               ),
               trailing: Text(
-                Imdb.getTotalResult() == 0
+                Imdb.getTotalResultbyMonth(_selectedMonth) == 0
                     ? ''
                     : isOnProfit()
                     ? 'PROFIT'
@@ -247,7 +265,7 @@ class DashboardState extends State<Dashboard> {
                           children: [
                             SizedBox(width: 12),
                             Text(
-                              '+ ${_formatCurrency(Imdb.getTotalIncome())}',
+                              '+ ${_formatCurrency(Imdb.getTotalIncomebyMonth(_selectedMonth))}',
                               style: TextStyle(
                                 color: Colors.green,
                                 fontWeight: .bold,
@@ -285,7 +303,7 @@ class DashboardState extends State<Dashboard> {
                           children: [
                             const SizedBox(width: 12),
                             Text(
-                              "- ${_formatCurrency(Imdb.getTotalExpenses())}",
+                              "- ${_formatCurrency(Imdb.getTotalExpensesbyMonth(_selectedMonth))}",
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontWeight: FontWeight.bold,

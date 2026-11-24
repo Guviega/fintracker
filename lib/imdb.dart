@@ -75,4 +75,77 @@ class Imdb {
   static double getTotalResult() {
     return getTotalIncome() - getTotalExpenses();
   }
+
+  static List<DateTime> getAvailableMonths() {
+    final months = <String, DateTime>{};
+    void addMonth(DateTime date) {
+      final month = DateTime(date.year, date.month);
+      months['${month.year}-${month.month}'] = month;
+    }
+
+    addMonth(DateTime.now());
+    for (final income in incomeList) {
+      addMonth(income.date);
+    }
+    for (final expense in expensesList) {
+      addMonth(expense.date);
+    }
+
+    return months.values.toList()
+      ..sort((a, b) => b.compareTo(a));
+  }
+
+  static List<Expense> filterExpensesbyMonth(DateTime month) {
+    return expensesList
+        .where((expense) =>
+            expense.date.year == month.year && expense.date.month == month.month)
+        .toList();
+  }
+
+  static List<Income> filterIncomebyMonth(DateTime month) {
+    return incomeList
+        .where((income) =>
+            income.date.year == month.year && income.date.month == month.month)
+        .toList();
+  }
+
+  static double getTotalExpensesbyMonth(DateTime month) {
+    return filterExpensesbyMonth(month)
+        .fold(0.0, (total, expense) => total + expense.value);
+  }
+
+  static double getTotalIncomebyMonth(DateTime month) {
+    return filterIncomebyMonth(month)
+        .fold(0.0, (total, income) => total + income.value);
+  }
+
+  static double getTotalResultbyMonth(DateTime month) {
+    return getTotalIncomebyMonth(month) - getTotalExpensesbyMonth(month);
+  }
+
+  static Map<PaymentMethod, double> getExpenseTotalsByPaymentMethod(
+    DateTime month,
+  ) {
+    final totals = <PaymentMethod, double>{};
+    for (final expense in filterExpensesbyMonth(month)) {
+      totals.update(
+        expense.paymentMethod,
+        (total) => total + expense.value,
+        ifAbsent: () => expense.value,
+      );
+    }
+    return totals;
+  }
+
+  static Map<String, double> getExpenseTotalsByCategory(DateTime month) {
+    final totals = <String, double>{};
+    for (final expense in filterExpensesbyMonth(month)) {
+      totals.update(
+        expense.category.name,
+        (total) => total + expense.value,
+        ifAbsent: () => expense.value,
+      );
+    }
+    return totals;
+  }
 }
