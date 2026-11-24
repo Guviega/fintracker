@@ -1,7 +1,8 @@
 class Category {
-  String _name;
+  Category(this._name, {this.id});
 
-  Category(this._name);
+  final int? id;
+  String _name;
 
   String get name {
     return _name;

@@ -1,10 +1,11 @@
-import 'package:fintracker/imdb.dart';
-import 'package:fintracker/main.dart';
+import 'package:fintracker/database/database_helper.dart';
 import 'package:fintracker/model/category.dart';
 import 'package:fintracker/view/category_name_editor.dart';
 import 'package:flutter/material.dart';
 
 class CategoryView extends StatefulWidget {
+  static const categoryLimit = 12;
+
   const CategoryView({super.key});
 
   @override
@@ -14,6 +15,15 @@ class CategoryView extends StatefulWidget {
 class _CategoryViewState extends State<CategoryView> {
   final _createFormKey = GlobalKey<FormState>();
   final _newCategoryController = TextEditingController();
+  List<Category> _categories = [];
+  bool _isLoading = true;
+  bool _hasLoadError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
 
   @override
   void dispose() {
@@ -21,68 +31,110 @@ class _CategoryViewState extends State<CategoryView> {
     super.dispose();
   }
 
-  String? _validateName(String? value, {Category? editingCategory}) {
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await DatabaseHelper.instance.getCategories();
+      if (!mounted) return;
+      setState(() {
+        _categories = categories;
+        _isLoading = false;
+        _hasLoadError = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = true;
+      });
+    }
+  }
+
+  String? _validateName(String? value) {
     final name = value?.trim() ?? '';
     if (name.isEmpty) return 'Enter a category name';
-    if (name.length > 50) return 'Use 20 characters or fewer';
-
-    final alreadyExists = Imdb.categoryList.any((category) {
-      return !identical(category, editingCategory) &&
-          category.name.trim().toLowerCase() == name.toLowerCase();
-    });
-    if (alreadyExists) return 'A category with this name already exists';
+    if (name.length > 20) return 'Use 20 characters or fewer';
     return null;
   }
 
-  void _createCategory() {
-    if (Imdb.categoryList.length >= MyApp.category_limit) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'You can have up to ${MyApp.category_limit} categories',
-          ),
-        ),
-      );
-      return;
-    }
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _createCategory() async {
     if (!_createFormKey.currentState!.validate()) return;
 
-    setState(() {
-      Imdb.categoryList.add(Category(_newCategoryController.text.trim()));
-      _newCategoryController.clear();
-    });
-  }
-
-  void _saveCategory(Category category, String value) {
-    final error = _validateName(value, editingCategory: category);
-    if (error != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
-      return;
-    }
-
-    setState(() => category.name = value.trim());
-  }
-
-  void _deleteCategory(Category category) {
-    final hasExpenses = Imdb.expensesList.any(
-      (expense) => identical(expense.category, category),
-    );
-    if (hasExpenses) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This category is used by expenses')),
+    final database = DatabaseHelper.instance;
+    final categoryCount = await database.getCategoryCount();
+    if (categoryCount >= CategoryView.categoryLimit) {
+      _showMessage(
+        'You can have up to ${CategoryView.categoryLimit} categories',
       );
       return;
     }
 
-    setState(() => Imdb.categoryList.remove(category));
+    final name = _newCategoryController.text.trim();
+    if (!await database.isCategoryNameAvailable(name)) {
+      _showMessage('A category with this name already exists');
+      return;
+    }
+
+    try {
+      await database.insertCategory(Category(name));
+      _newCategoryController.clear();
+      await _loadCategories();
+    } catch (_) {
+      _showMessage('Could not save the category');
+    }
+  }
+
+  Future<bool> _saveCategory(Category category, String value) async {
+    final error = _validateName(value);
+    if (error != null) {
+      _showMessage(error);
+      return false;
+    }
+
+    final name = value.trim();
+    final database = DatabaseHelper.instance;
+    if (!await database.isCategoryNameAvailable(
+      name,
+      excludingCategoryId: category.id,
+    )) {
+      _showMessage('A category with this name already exists');
+      return false;
+    }
+
+    try {
+      await database.updateCategory(Category(name, id: category.id));
+      category.name = name;
+      await _loadCategories();
+      return true;
+    } catch (_) {
+      _showMessage('Could not update the category');
+      return false;
+    }
+  }
+
+  Future<void> _deleteCategory(Category category) async {
+    final id = category.id;
+    if (id == null) return;
+
+    try {
+      final wasDeleted = await DatabaseHelper.instance.deleteCategory(id);
+      if (!wasDeleted) {
+        _showMessage('This category is used by expenses');
+        return;
+      }
+      await _loadCategories();
+    } catch (_) {
+      _showMessage('Could not delete the category');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final categories = Imdb.categoryList.toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -99,7 +151,7 @@ class _CategoryViewState extends State<CategoryView> {
                     decoration: const InputDecoration(),
                     textInputAction: TextInputAction.done,
                     maxLength: 20,
-                    validator: (value) => _validateName(value),
+                    validator: _validateName,
                     onFieldSubmitted: (_) => _createCategory(),
                   ),
                 ),
@@ -113,23 +165,33 @@ class _CategoryViewState extends State<CategoryView> {
         ),
         const Divider(height: 16),
         Expanded(
-          child: ListView.builder(
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              return Padding(
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 8),
-                child: CategoryNameEditor(
-                  key: ObjectKey(category),
-                  category: category,
-                  validateName: (value) =>
-                      _validateName(value, editingCategory: category),
-                  onSave: (value) => _saveCategory(category, value),
-                  onDelete: () => _deleteCategory(category),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _hasLoadError
+              ? Center(
+                  child: TextButton(
+                    onPressed: _loadCategories,
+                    child: const Text('Could not load categories. Retry.'),
+                  ),
+                )
+              : _categories.isEmpty
+              ? const Center(child: Text('No categories yet. Add one above.'))
+              : ListView.builder(
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
+                    final category = _categories[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: CategoryNameEditor(
+                        key: ValueKey(category.id),
+                        category: category,
+                        validateName: _validateName,
+                        onSave: (value) => _saveCategory(category, value),
+                        onDelete: () => _deleteCategory(category),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

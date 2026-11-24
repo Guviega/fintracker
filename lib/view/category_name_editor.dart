@@ -12,8 +12,8 @@ class CategoryNameEditor extends StatefulWidget {
 
   final Category category;
   final String? Function(String?) validateName;
-  final ValueChanged<String> onSave;
-  final VoidCallback onDelete;
+  final Future<bool> Function(String) onSave;
+  final Future<void> Function() onDelete;
 
   @override
   State<CategoryNameEditor> createState() => _CategoryNameEditorState();
@@ -42,7 +42,7 @@ class _CategoryNameEditorState extends State<CategoryNameEditor> {
     });
   }
 
-  void _save() {
+  Future<void> _save() async {
     final error = widget.validateName(_controller.text);
     if (error != null) {
       ScaffoldMessenger.of(
@@ -51,8 +51,8 @@ class _CategoryNameEditorState extends State<CategoryNameEditor> {
       return;
     }
 
-    widget.onSave(_controller.text);
-    setState(() => _isEditing = false);
+    final saved = await widget.onSave(_controller.text);
+    if (saved && mounted) setState(() => _isEditing = false);
   }
 
   @override
@@ -87,7 +87,7 @@ class _CategoryNameEditorState extends State<CategoryNameEditor> {
               ],
               IconButton(
                 tooltip: 'Delete category',
-                onPressed: widget.onDelete,
+                onPressed: () => widget.onDelete(),
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
               ),
             ],

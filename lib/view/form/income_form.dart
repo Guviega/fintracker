@@ -1,4 +1,4 @@
-import 'package:fintracker/imdb.dart';
+import 'package:fintracker/database/database_helper.dart';
 import 'package:fintracker/model/income.dart';
 import 'package:fintracker/view/form/widgets/income_form_fields.dart';
 import 'package:flutter/material.dart';
@@ -71,27 +71,30 @@ class _IncomeFormState extends State<IncomeForm> {
     }
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final value = _parseValue(_valueController.text)!;
-    final income = _income;
-    if (income == null) {
-      Imdb.incomeList.add(
-        Income(
-          description: _descriptionController.text.trim(),
-          source: _sourceController.text.trim(),
-          date: _date,
-          value: value,
-        ),
+    final income = Income(
+      id: _income?.id,
+      description: _descriptionController.text.trim(),
+      source: _sourceController.text.trim(),
+      date: _date,
+      value: value,
+    );
+
+    try {
+      if (_income == null) {
+        await DatabaseHelper.instance.insertIncome(income);
+      } else {
+        await DatabaseHelper.instance.updateIncome(income);
+      }
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save the income')),
       );
-    } else {
-      income
-        ..description = _descriptionController.text.trim()
-        ..source = _sourceController.text.trim()
-        ..date = _date
-        ..value = value;
     }
-    Navigator.pop(context, true);
   }
 
   @override

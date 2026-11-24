@@ -1,4 +1,5 @@
-import 'package:fintracker/imdb.dart';
+import 'package:fintracker/database/database_helper.dart';
+import 'package:fintracker/model/category.dart';
 import 'package:fintracker/model/expense.dart';
 import 'package:fintracker/model/payment_method.dart';
 import 'package:fintracker/view/form/widgets/expenses_form_fields.dart';
@@ -25,6 +26,9 @@ class _ExpensesFormState extends State<ExpensesForm> {
   Expense? get _expense => widget.expense;
   int _selectedCategory = -1;
   PaymentMethod? _paymentMethod;
+  List<Category> _categories = [];
+  bool _isLoadingCategories = true;
+  bool _hasCategoryLoadError = false;
 
   @override
   void initState() {
@@ -37,9 +41,30 @@ class _ExpensesFormState extends State<ExpensesForm> {
       _descriptionController.text = expense.description;
       _date = expense.date;
       _paymentMethod = expense.paymentMethod;
-      _selectedCategory = Imdb.categoryList.toList().indexOf(expense.category);
     }
     _dateController.text = DateFormat('dd/MM/yyyy').format(_date);
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await DatabaseHelper.instance.getCategories();
+      if (!mounted) return;
+      setState(() {
+        _categories = categories;
+        _isLoadingCategories = false;
+        _hasCategoryLoadError = false;
+        _selectedCategory = categories.indexWhere(
+          (category) => category.id == _expense?.category.id,
+        );
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingCategories = false;
+        _hasCategoryLoadError = true;
+      });
+    }
   }
 
   @override
@@ -73,37 +98,65 @@ class _ExpensesFormState extends State<ExpensesForm> {
     }
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final expense = _expense;
-    final category = Imdb.categoryList.elementAt(_selectedCategory);
-    final value = _parseValue(_valueController.text)!;
-    if (expense == null) {
-      Imdb.expensesList.add(
-        Expense(
-          description: _descriptionController.text.trim(),
-          date: _date,
-          value: value,
-          paymentMethod: _paymentMethod!,
-          category: category,
-        ),
-      );
-    } else {
-      expense
-        ..description = _descriptionController.text.trim()
-        ..date = _date
-        ..value = value
-        ..paymentMethod = _paymentMethod!
-        ..category = category;
+    if (_selectedCategory < 0 || _selectedCategory >= _categories.length) {
+      return;
     }
-    Navigator.pop(context, true);
+
+    final category = _categories[_selectedCategory];
+    final value = _parseValue(_valueController.text)!;
+    final expense = Expense(
+      id: _expense?.id,
+      description: _descriptionController.text.trim(),
+      date: _date,
+      value: value,
+      paymentMethod: _paymentMethod!,
+      category: category,
+    );
+
+    try {
+      if (_expense == null) {
+        await DatabaseHelper.instance.insertExpense(expense);
+      } else {
+        await DatabaseHelper.instance.updateExpense(expense);
+      }
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save the expense')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     const color = Colors.red;
     final isEditing = _expense != null;
-    final categories = Imdb.categoryList.toList();
+
+    if (_isLoadingCategories) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(isEditing ? 'Edit Expense' : 'Register Expense'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_hasCategoryLoadError) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(isEditing ? 'Edit Expense' : 'Register Expense'),
+        ),
+        body: Center(
+          child: TextButton(
+            onPressed: _loadCategories,
+            child: const Text('Could not load categories. Retry.'),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -124,10 +177,12 @@ class _ExpensesFormState extends State<ExpensesForm> {
             valueController: _valueController,
             descriptionController: _descriptionController,
             dateController: _dateController,
-            categories: categories,
+            categories: _categories,
             selectedCategory: _selectedCategory,
             categoryValidator: (_) =>
-                _selectedCategory < 0 ? 'Select a category' : null,
+                _selectedCategory < 0 || _selectedCategory >= _categories.length
+                ? 'Select a category'
+                : null,
             onCategorySelected: (index) =>
                 setState(() => _selectedCategory = index),
             paymentMethod: _paymentMethod,

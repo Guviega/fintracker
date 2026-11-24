@@ -1,4 +1,3 @@
-import 'package:fintracker/imdb.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -8,14 +7,14 @@ class ExpenseChartCard extends StatelessWidget {
     required this.title,
     required this.icon,
     required this.totals,
-    required this.selectedMonth,
+    required this.grandTotal,
     required this.formatCurrency,
   });
 
   final String title;
   final IconData icon;
   final List<MapEntry<String, double>> totals;
-  final DateTime selectedMonth;
+  final double grandTotal;
   final String Function(double) formatCurrency;
 
   static const _chartColors = <Color>[
@@ -85,8 +84,6 @@ class ExpenseChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grandTotal = Imdb.getTotalExpensesbyMonth(selectedMonth);
-
     return Card(
       elevation: 1,
       child: Padding(

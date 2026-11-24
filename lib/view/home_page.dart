@@ -16,8 +16,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<String> navigationTitles = ["Dashboard", "Income", "Expenses", "Categories"];
+  List<String> navigationTitles = [
+    "Dashboard",
+    "Income",
+    "Expenses",
+    "Categories",
+  ];
   int currentPageIndex = 0;
+  int _contentRefreshKey = 0;
   final fab_color = <int, Color>{1: Colors.green, 2: Colors.redAccent};
   final fab_route = <int, String>{
     1: IncomeForm.routeName,
@@ -30,7 +36,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
         title: Text(navigationTitles[currentPageIndex]),
-        leading: Image.asset("assets/icon/fintracker_icon_foreground.png")
+        leading: Image.asset("assets/icon/fintracker_icon_foreground.png"),
       ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
@@ -64,8 +70,13 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: currentPageIndex == 1 || currentPageIndex == 2
           ? FloatingActionButton(
               onPressed: () async {
-                await Navigator.pushNamed(context, fab_route[currentPageIndex]!);
-                if (mounted) setState(() {});
+                await Navigator.pushNamed(
+                  context,
+                  fab_route[currentPageIndex]!,
+                );
+                if (mounted) {
+                  setState(() => _contentRefreshKey++);
+                }
               },
               child: const Icon(Icons.add),
               backgroundColor: fab_color[currentPageIndex],
@@ -73,6 +84,7 @@ class _HomePageState extends State<HomePage> {
           : null,
       body: [
         Dashboard(
+          key: ValueKey('dashboard-$_contentRefreshKey'),
           onIncomeTap: () {
             setState(() {
               currentPageIndex = 1;
@@ -84,9 +96,9 @@ class _HomePageState extends State<HomePage> {
             });
           },
         ),
-        IncomeView(),
-        ExpenseView(),
-        CategoryView(),
+        IncomeView(key: ValueKey('income-$_contentRefreshKey')),
+        ExpenseView(key: ValueKey('expense-$_contentRefreshKey')),
+        CategoryView(key: ValueKey('category-$_contentRefreshKey')),
       ][currentPageIndex],
     );
   }
