@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Color(0xFF2563EB)),
       ),
-      home: const HomePage(title: 'FinTracker'),
+      home: HomePage(),
       routes: {
         ExpenseView.routeName: (context) => ExpenseView(),
         IncomeView.routeName: (context) => IncomeView(),
