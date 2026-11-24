@@ -109,6 +109,7 @@ class _IncomeFormState extends State<IncomeForm> {
           child: Column(children: [
             _fieldCard('Value', Icons.arrow_upward, TextFormField(
               controller: _valueController,
+              maxLength: 10,
               decoration: const InputDecoration(prefix: Text("+ R\$ ", style: TextStyle(color: color),), filled: true, border: InputBorder.none),
               style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -122,12 +123,14 @@ class _IncomeFormState extends State<IncomeForm> {
             const SizedBox(height: 8),
             _fieldCard('Description', Icons.description, TextFormField(
               controller: _descriptionController,
+              maxLength: 20,
               decoration: const InputDecoration(filled: true, border: InputBorder.none),
               validator: (text) => (text == null || text.trim().isEmpty) ? 'Enter a description' : null,
             ), extra: Column(children: [
               ListTile(leading: const Icon(Icons.account_balance, color: color), title: const Text('Source')),
               Padding(padding: const EdgeInsets.all(8), child: TextFormField(
                 controller: _sourceController,
+                maxLength: 20,
                 decoration: const InputDecoration(filled: true, border: InputBorder.none),
                 validator: (text) => (text == null || text.trim().isEmpty) ? 'Enter a source' : null,
               )),

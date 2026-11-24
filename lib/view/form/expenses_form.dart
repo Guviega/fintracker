@@ -113,8 +113,9 @@ class _ExpensesFormState extends State<ExpensesForm> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(children: [
-            _card('Value', Icons.arrow_downward, TextFormField(
+            _fieldCard('Value', Icons.arrow_downward, TextFormField(
               controller: _valueController,
+              maxLength: 10,
               decoration: const InputDecoration(prefix: Text("- R\$ ", style: TextStyle(color: color),), filled: true, border: InputBorder.none),
               style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -126,13 +127,14 @@ class _ExpensesFormState extends State<ExpensesForm> {
               },
             )),
             const SizedBox(height: 8),
-            _card('Description', Icons.description, TextFormField(
+            _fieldCard('Description', Icons.description, TextFormField(
               controller: _descriptionController,
+              maxLength: 20,
               decoration: const InputDecoration(filled: true, border: InputBorder.none),
               validator: (text) => (text == null || text.trim().isEmpty) ? 'Enter a description' : null,
             )),
             const SizedBox(height: 8),
-            _card('Category', Icons.category, FormField<int>(
+            _fieldCard('Category', Icons.category, FormField<int>(
               initialValue: _selectedCategory,
               validator: (_) => _selectedCategory < 0 ? 'Select a category' : null,
               builder: (state) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -155,7 +157,7 @@ class _ExpensesFormState extends State<ExpensesForm> {
               ]),
             )),
             const SizedBox(height: 8),
-            _card('Payment Method', Icons.credit_card, FormField<PaymentMethod>(
+            _fieldCard('Payment Method', Icons.credit_card, FormField<PaymentMethod>(
               initialValue: _paymentMethod,
               validator: (_) => _paymentMethod == null ? 'Select a payment method' : null,
               builder: (state) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -178,7 +180,7 @@ class _ExpensesFormState extends State<ExpensesForm> {
               ]),
             )),
             const SizedBox(height: 8),
-            _card('Date', Icons.calendar_month, TextFormField(
+            _fieldCard('Date', Icons.calendar_month, TextFormField(
               controller: _dateController,
               readOnly: true,
               onTap: _selectDate,
@@ -190,7 +192,7 @@ class _ExpensesFormState extends State<ExpensesForm> {
     );
   }
 
-  Widget _card(String title, IconData icon, Widget field) => Card(
+  Widget _fieldCard(String title, IconData icon, Widget field) => Card(
     child: Padding(
       padding: const EdgeInsets.all(8),
       child: Column(children: [
