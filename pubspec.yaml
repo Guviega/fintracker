@@ -41,6 +41,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_native_splash: ^2.4.7
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -57,6 +58,21 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/icon/fintracker_icon_foreground.png"
   adaptive_icon_background: "assets/icon/fintracker_icon_background.png"
   adaptive_icon_monochrome: "assets/icon/fintracker_icon_monochrome.png"
+
+flutter_native_splash:
+  color: "#011421"
+  image: assets/logo/fintracker_logo.png
+  branding: assets/logo/fintracker_branding.png
+  android: true
+  ios: true
+  web: false
+  android_gravity: center
+  ios_content_mode: center
+  branding_mode: bottom
+  android_12:
+    color: "#011421"
+    image: assets/logo/fintracker_logo_splash_android12.png
+    branding: assets/logo/fintracker_branding.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
