@@ -30,6 +30,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
         title: Text(navigationTitles[currentPageIndex]),
+        leading: Image.asset("assets/icon/fintracker_icon_foreground.png")
       ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
